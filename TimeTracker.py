@@ -142,7 +142,8 @@ class Semester:
         if mod == None:
             mod = Module(moduleName)
             self.add_module(mod)
-        return mod.add_entry(category=category, comment=comment)
+        entry = mod.add_entry(category=category, comment=comment)
+        return mod, entry
 
     def get_durations(self):
         '''Creates a list of the duration of each module
@@ -229,8 +230,9 @@ class Study:
         if sem == None:
             sem = Semester(semesterName)
             self.add_semester(sem)
-        return sem.add_entry(moduleName=moduleName, category=category,
+        mod, entry = sem.add_entry(moduleName=moduleName, category=category,
                              comment=comment)
+        return sem, mod, entry
 
     def get_durations(self):
         '''Creates a list of the duration of each semester
@@ -315,7 +317,7 @@ class TimeTracker:
         category: the category
         comment: an optional comment
         '''
-        self.current_entry = self.study.add_entry(
+        self.current_semester, self.current_module, self.current_entry = self.study.add_entry(
             semesterName=semesterName, moduleName=moduleName,
             category=category, comment=comment)
 
@@ -399,16 +401,9 @@ class TimeTrackerGUI:
             tracker_view, text="Start", command=self.btn_start_stop_click)
         self.start_stop_btn.grid(row=1, column=0)
 
-        # TODO: update duration labels
         self.current_duration_label = tk.Label(
-            tracker_view, text="current duration: ")
-        self.current_duration_label.config(state="disabled")
-        self.current_duration_label.grid(row=1, column=1)
-
-        self.total_duration_label = tk.Label(
-            tracker_view, text="total duration: ")
-        self.total_duration_label.config(state="disabled")
-        self.total_duration_label.grid(row=1, column=2)
+            tracker_view, text="")
+        self.current_duration_label.grid(row=1, column=1, columnspan=3, sticky="W")
 
         self.treeview_frame = Frame(tracker_view)
 
@@ -446,6 +441,16 @@ class TimeTrackerGUI:
         tracker_view.tkraise()
         # TODO:
 
+    def update_label(self):
+        duration = str(self.tracker.current_entry.get_duration()).split('.')[0] # remove micros
+        cat = self.tracker.current_entry.category
+        mod = self.tracker.current_module.name
+        self.current_duration_label.configure(
+            text=f"Tracking: {cat} in module {mod} for {duration}")
+        
+        if self.is_tracking:
+            self.root.after(1000, self.update_label)
+
     def combo_update(self, index, value, op):
         self.update_treeview()
 
@@ -460,6 +465,8 @@ class TimeTrackerGUI:
             # stop tracking
             self.tracker.stop_tracking()
             self.start_stop_btn.config(text="Start")
+            bgColor = self.root.cget("background")
+            self.current_duration_label.configure(background=bgColor)
             self.is_tracking = False
         else:
             # start tracking
@@ -468,7 +475,9 @@ class TimeTrackerGUI:
                 self.category_var.get(), self.comment_var.get())
             # TODO: can comboboxes be blocked because tracking is active?
             self.start_stop_btn.config(text="Stop")
+            self.current_duration_label.configure(background='light green')
             self.is_tracking = True
+            self.update_label()
 
         self.update_treeview()
 
@@ -518,8 +527,8 @@ class TimeTrackerGUI:
                         for entry in mod.entries:
                             add = True
                             if (catName in entry.category or catName == ""):
-                                start_time = entry.start_time
-                                duration = entry.get_duration()
+                                start_time = entry.start_time.strftime("%Y-%m-%d %H:%M:%S")
+                                duration = str(entry.get_duration()).split('.')[0] # remove micros
                                 self.tree.insert(
                                     "", "end", text=sem.name,
                                     values=(mod.name, entry.category,

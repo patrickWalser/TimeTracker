@@ -248,7 +248,7 @@ class UnitTestSemester(unittest.TestCase):
             mod_duration = 0
             for cat in data_categories:
                 for dur in data_durations:
-                    entry = sem.add_entry(moduleName=mod, category=cat)
+                    _,entry = sem.add_entry(moduleName=mod, category=cat)
                     entry.stop_time = entry.start_time \
                         + datetime.timedelta(seconds=dur)
                     mod_duration += dur
@@ -405,7 +405,7 @@ class UnitTestStudy(unittest.TestCase):
                 mod_duration = 0
                 for cat in data_categories:
                     for dur in data_durations:
-                        entry = study.add_entry(semesterName=sem,
+                        _,_,entry = study.add_entry(semesterName=sem,
                                                 moduleName=mod, category=cat)
                         entry.stop_time = entry.start_time \
                             + datetime.timedelta(seconds=dur)
