@@ -1,3 +1,4 @@
+from my_accordion import Accordion
 import tkinter as tk
 from tkinter import messagebox, ttk, Frame
 import datetime
@@ -231,7 +232,7 @@ class Study:
             sem = Semester(semesterName)
             self.add_semester(sem)
         mod, entry = sem.add_entry(moduleName=moduleName, category=category,
-                             comment=comment)
+                                   comment=comment)
         return sem, mod, entry
 
     def get_durations(self):
@@ -357,7 +358,8 @@ class TimeTrackerGUI:
             command=lambda: tracker_view.tkraise()).grid(row=0, column=0)
         self.analyse_btn = tk.Button(
             header_view, text="Analyse",
-            command=lambda: analyse_view.tkraise()).grid(row=0, column=1)
+            command=lambda: [analyse_view.tkraise(),
+                             self.generate_accordion(analyse_view)]).grid(row=0, column=1)
 
         # Tracker View
         # self.label =tk.Label(tracker_view, text="Tracker View").pack()
@@ -403,7 +405,8 @@ class TimeTrackerGUI:
 
         self.current_duration_label = tk.Label(
             tracker_view, text="")
-        self.current_duration_label.grid(row=1, column=1, columnspan=3, sticky="W")
+        self.current_duration_label.grid(
+            row=1, column=1, columnspan=3, sticky="W")
 
         self.treeview_frame = Frame(tracker_view)
 
@@ -434,20 +437,36 @@ class TimeTrackerGUI:
 
         self.treeview_frame.grid(row=2, columnspan=8)
         # Analyse View
-        self.label_analyse = tk.Label(analyse_view, text="Analyse View").pack()
-
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-
-        tracker_view.tkraise()
+        # self.label_analyse = tk.Label(analyse_view, text="Analyse View").pack()
         # TODO:
 
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        tracker_view.tkraise()
+
+    def generate_accordion(self, parent):
+        try:
+            self.accordion.destroy()
+        except:
+            pass
+
+        self.accordion = Accordion(parent)
+        self.accordion.grid(row=0, column=0, sticky='ns')
+
+        for sem in self.tracker.study.semesters:
+            section = self.accordion.add_section(
+                sem.name, lambda sem=sem: print("sem: " + sem.name+" clicked"))
+            for mod in sem.modules:
+                section.add_element(mod.name, lambda sem=sem, mod=mod: print(
+                    "sem: " + sem.name + " mod: " + mod.name+" clicked"))
+
     def update_label(self):
-        duration = str(self.tracker.current_entry.get_duration()).split('.')[0] # remove micros
+        duration = str(self.tracker.current_entry.get_duration()
+                       ).split('.')[0]  # remove micros
         cat = self.tracker.current_entry.category
         mod = self.tracker.current_module.name
         self.current_duration_label.configure(
             text=f"Tracking: {cat} in module {mod} for {duration}")
-        
+
         if self.is_tracking:
             self.root.after(1000, self.update_label)
 
