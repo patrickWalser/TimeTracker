@@ -3,6 +3,8 @@ import tkinter as tk
 from tkinter import messagebox, ttk, Frame
 import datetime
 import pickle
+import base64
+from tkcalendar import DateEntry
 
 
 class Entry:
@@ -601,8 +603,86 @@ class TimeTrackerGUI:
     def tree_click(self, event):
         # todo implement editing
         selected = self.tree.focus()
-        values = self.tree.item(selected)
-        print("doubleclick event on treeview")
+        item = self.tree.item(selected)
+        tags = item['tags']
+        sem_base64 = tags[0]
+        sem_pickle = base64.b64decode(sem_base64)
+        sem = pickle.loads(sem_pickle)
+        mod_base64 = tags[1]
+        mod_pickle = base64.b64decode(mod_base64)
+        mod = pickle.loads(mod_pickle)
+
+        entry_base64 = tags[2]
+        entry_pickle = base64.b64decode(entry_base64)
+        entry = pickle.loads(entry_pickle)
+
+        # TODO: call a new window for editing
+        # if edit -> delete curr entry and create new entry
+        edit_window = tk.Toplevel(self.root)
+        edit_window.title("Edit entry")
+
+        self.sem_var =tk.StringVar()
+        sem_entry = tk.Entry(edit_window, textvariable=self.sem_var)
+        sem_entry.grid(row=0, column= 0)
+        self.sem_var.set(sem.name)
+        
+        self.mod_var =tk.StringVar()
+        mod_entry = tk.Entry(edit_window, textvariable=self.mod_var)
+        mod_entry.grid(row=0, column=1)
+        self.mod_var.set(mod.name)
+
+        self.cat_var = tk.StringVar()
+        cat_entry = tk.Entry(edit_window, textvariable=self.cat_var)
+        cat_entry.grid(row=0, column = 2)
+        self.cat_var.set(entry.category)
+
+        self.comment_var = tk.StringVar()
+        comment_entry = tk.Entry(edit_window, textvariable=self.comment_var)
+        comment_entry.grid(row=0, column=3)
+        self.comment_var.set(entry.comment)
+
+        self.start_time = DateTimeFrame(edit_window, label="start time:")
+        self.start_time.grid(row=1, columnspan=4, sticky='w')
+        self.start_time.set_datetime(entry.start_time)
+
+        self.stop_time = DateTimeFrame(edit_window, label = "stop time:")
+        self.stop_time.grid(row=2, columnspan=4, sticky='w')
+        self.stop_time.set_datetime(entry.stop_time)
+
+        if mod.stop != None:
+            self.module_end = DateTimeFrame(edit_window, label = "Module end:")
+            self.module_end.grid(row=3, columnspan=4, sticky='w')
+            self.module_end.set_datetime(mod.stop)
+
+        add_btn =tk.Button(edit_window, text = "Add new entry", command = lambda s = sem, m=mod, e=entry:self.add_new_entry())
+        add_btn.grid(row=4, column = 0, sticky='news')
+        edit_btn =tk.Button(edit_window, text='Edit entry', command = lambda s = sem, m=mod, e = entry: self.edit(s, m, e))
+        edit_btn.grid(row=4, column=1, sticky='news')
+        remove_btn = tk.Button(edit_window,text='Delete entry', command = lambda s = sem, m=mod, e = entry: self.remove(s, m, e))
+        remove_btn.grid(row=4, column = 2, sticky='news')
+
+    def remove(self, sem, mod, entry):
+        self.tracker.study.remove_entry(sem, mod, entry)
+        self.update_treeview()
+        print("removed entry")
+
+    def edit(self, sem, mod, entry):
+        self.remove(sem, mod, entry)
+        s,m,e = self.add_new_entry()
+        if mod.stop !=  None:
+            m.stop = self.module_end.get_datetime()
+
+    def add_new_entry(self):
+        semName = self.sem_var.get()
+        modName = self.mod_var.get()
+        catName = self.cat_var.get()
+        comment = self.comment_var.get()
+        s,m,e = self.tracker.study.add_entry(semName, modName, catName, comment)
+        e.start_time = self.start_time.get_datetime()
+        e.stop_time = self.stop_time.get_datetime()
+        self.update_treeview()
+        print("added entry")
+        return s,m,e
 
     def btn_start_stop_click(self):
         if (self.is_tracking):
@@ -671,12 +751,22 @@ class TimeTrackerGUI:
                         for entry in mod.entries:
                             add = True
                             if (catName in entry.category or catName == ""):
-                                start_time = entry.start_time.strftime("%Y-%m-%d %H:%M:%S")
-                                duration = str(entry.get_duration()).split('.')[0] # remove micros
+                                start_time = entry.start_time.strftime(
+                                    "%Y-%m-%d %H:%M:%S")
+                                duration = str(entry.get_duration()).split('.')[
+                                    0]  # remove micros
+                                sem_obj= pickle.dumps(sem)
+                                sem_base64 = base64.b64encode(sem_obj).decode('utf-8')
+                                mod_obj = pickle.dumps(mod)
+                                mod_base64 = base64.b64encode(mod_obj).decode('utf-8')
+                                entry_obj = pickle.dumps(entry)
+                                entry_base64 = base64.b64encode(entry_obj).decode('utf-8')
                                 self.tree.insert(
                                     "", "end", text=sem.name,
                                     values=(mod.name, entry.category,
-                                            entry.comment, start_time, duration))
+                                            entry.comment, start_time,
+                                            duration), tags=(sem_base64, mod_base64, entry_base64,))
+
 
     def save_data(self):  # TODO: save in correct format
         with open("time_tracking_data.json", "wb") as file:
