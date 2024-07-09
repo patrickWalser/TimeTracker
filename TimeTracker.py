@@ -125,7 +125,15 @@ class Module:
         durations = []
         sum = datetime.timedelta(seconds=0)
         for entry in self.entries:
-            durations.append({"Category": entry.category,
+            found = False
+            for item in durations:
+                if item['Name'] == entry.category:
+                    item['Duration'] = item['Duration'] + entry.get_duration()
+                    found = True
+                    break
+
+            if not found:
+                durations.append({"Name": entry.category,
                               "Duration": entry.get_duration()})
             sum += entry.get_duration()
         return durations, sum

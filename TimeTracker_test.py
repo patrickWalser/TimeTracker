@@ -4,7 +4,6 @@ import datetime
 from time import sleep
 
 
-@unittest.skip("reduce runtime")
 class UnitTestEnry(unittest.TestCase):
     def test_init(self):
         '''
@@ -24,10 +23,14 @@ class UnitTestEnry(unittest.TestCase):
         e2 = TimeTracker.Entry("a")
         x = TimeTracker.Module(name="")
 
-        self.assertEqual(e==x, False, "Comparing to wrong Type did not return NotImplemented")
-        self.assertEqual(e==e,True,"Comparison between same instance did not return equality")
-        self.assertEqual(e==e1, False, "Comparison of different objects returned equality")
-        self.assertEqual(e==e2, False, "Comparison of different objects returned equality")
+        self.assertEqual(
+            e == x, False, "Comparing to wrong Type did not return NotImplemented")
+        self.assertEqual(
+            e == e, True, "Comparison between same instance did not return equality")
+        self.assertEqual(
+            e == e1, False, "Comparison of different objects returned equality")
+        self.assertEqual(
+            e == e2, False, "Comparison of different objects returned equality")
 
     def test_stop(self):
         '''
@@ -114,10 +117,14 @@ class UnitTestModule(unittest.TestCase):
         m2 = TimeTracker.Module("a")
         e = TimeTracker.Entry("")
 
-        self.assertEqual(m==e, False, "Comparing to wrong Type did not return NotImplemented")
-        self.assertEqual(m==m,True,"Comparison between same instance did not return equality")
-        self.assertEqual(m==m1, False, "Comparison of different objects returned equality")
-        self.assertEqual(m==m2, False, "Comparison of different objects returned equality")
+        self.assertEqual(
+            m == e, False, "Comparing to wrong Type did not return NotImplemented")
+        self.assertEqual(
+            m == m, True, "Comparison between same instance did not return equality")
+        self.assertEqual(
+            m == m1, False, "Comparison of different objects returned equality")
+        self.assertEqual(
+            m == m2, False, "Comparison of different objects returned equality")
 
     def test_start_module(self):
         '''test the start_module function'''
@@ -172,15 +179,15 @@ class UnitTestModule(unittest.TestCase):
 
         # remove entry
         mod.remove_entry(e)
-        self.assertEqual(len(mod.entries), 1, 
+        self.assertEqual(len(mod.entries), 1,
                          "Wrong length of list after removing entry")
-        
+
         # remove non existing entry
         with self.assertRaises(ValueError):
             mod.remove_entry(e)
 
         mod.remove_entry(e1)
-        self.assertEqual(len(mod.entries), 0, 
+        self.assertEqual(len(mod.entries), 0,
                          "Wrong length of list after removing entry")
 
     def test_get_durations(self):
@@ -195,15 +202,17 @@ class UnitTestModule(unittest.TestCase):
         ref_sum = 0
         ref_list = []
         for cat in data_categories:
+            cat_dur = 0
             for dur in data_durations:
                 # create data
                 e = mod.add_entry(category=cat)
                 e.stop_time = e.start_time + datetime.timedelta(seconds=dur)
+                cat_dur += dur
 
-                # create reference
-                ref_sum += dur
-                ref_list.append({"Category": cat,
-                                 "Duration": datetime.timedelta(seconds=dur)})
+            # create reference
+            ref_sum += cat_dur
+            ref_list.append({"Name": cat,
+                             "Duration": datetime.timedelta(seconds=cat_dur)})
 
         durations, sum = mod.get_durations()
 
@@ -249,11 +258,14 @@ class UnitTestSemester(unittest.TestCase):
         s2 = TimeTracker.Semester("a")
         e = TimeTracker.Entry("")
 
-        self.assertEqual(s==e, False, "Comparing to wrong Type did not return NotImplemented")
-        self.assertEqual(s==s,True,"Comparison between same instance did not return equality")
-        self.assertEqual(s==s1, False, "Comparison of different objects returned equality")
-        self.assertEqual(s==s2, False, "Comparison of different objects returned equality")
-
+        self.assertEqual(
+            s == e, False, "Comparing to wrong Type did not return NotImplemented")
+        self.assertEqual(
+            s == s, True, "Comparison between same instance did not return equality")
+        self.assertEqual(
+            s == s1, False, "Comparison of different objects returned equality")
+        self.assertEqual(
+            s == s2, False, "Comparison of different objects returned equality")
 
     def test_add_module(self):
         '''tests if modules can be added to semester'''
@@ -321,28 +333,28 @@ class UnitTestSemester(unittest.TestCase):
 
         # generate data
         mod, entry = sem.add_entry(moduleName="mod", category="cat")
-        _,entry2 = sem.add_entry(moduleName="mod", category="cat", comment="a")
+        _, entry2 = sem.add_entry(
+            moduleName="mod", category="cat", comment="a")
         mod2, entry3 = sem.add_entry(moduleName="mod2", category="cat")
 
         # remove existing entry
         sem.remove_entry(mod, entry)
-        self.assertEqual(len(sem.modules),2,
+        self.assertEqual(len(sem.modules), 2,
                          "Wrong length of module list after removing an entry")
 
-        self.assertEqual(len(mod.entries), 1, 
+        self.assertEqual(len(mod.entries), 1,
                          "Wrong length of entry list after removing entry \
                             from module")
-        
+
         # remove non existing entry
         with self.assertRaises(ValueError):
             sem.remove_entry(mod, entry)
-        
-        
+
         # remove last entry of module
         sem.remove_entry(mod, entry2)
-        self.assertEqual(len(sem.modules),1,
+        self.assertEqual(len(sem.modules), 1,
                          "Wrong length of module list after removing an entry")
-        
+
     def test_get_durations(self):
         '''test if correct module durations are returned'''
 
@@ -358,7 +370,7 @@ class UnitTestSemester(unittest.TestCase):
             mod_duration = 0
             for cat in data_categories:
                 for dur in data_durations:
-                    _,entry = sem.add_entry(moduleName=mod, category=cat)
+                    _, entry = sem.add_entry(moduleName=mod, category=cat)
                     entry.stop_time = entry.start_time \
                         + datetime.timedelta(seconds=dur)
                     mod_duration += dur
@@ -513,27 +525,26 @@ class UnitTestStudy(unittest.TestCase):
             study.remove_entry(moduleName="", category="")
 
         # generate data
-        sem,mod,entry = study.add_entry(semesterName="sem", moduleName="mod",
-                                category="cat")
-        _,mod1,entry1 = study.add_entry(semesterName="sem", moduleName="mod1",
-                                category="cat")
-        sem2,_,entry2 = study.add_entry(semesterName="sem2", moduleName="mod1",
-                                category="cat")
-        
+        sem, mod, entry = study.add_entry(semesterName="sem", moduleName="mod",
+                                          category="cat")
+        _, mod1, entry1 = study.add_entry(semesterName="sem", moduleName="mod1",
+                                          category="cat")
+        sem2, _, entry2 = study.add_entry(semesterName="sem2", moduleName="mod1",
+                                          category="cat")
+
         study.remove_entry(sem, mod, entry)
         self.assertEqual(len(study.semesters), 2,
                          "Wrong amount of semesters after removing entry")
         self.assertEqual(len(sem.modules), 1,
                          "Wrong length of module list after removing entry")
-        
+
         # remove non existing entry
         with self.assertRaises(ValueError):
             study.remove_entry(sem, mod, entry)
 
         study.remove_entry(sem, mod1, entry1)
-        self.assertEqual(len(study.semesters),1,
+        self.assertEqual(len(study.semesters), 1,
                          "Wrong amount of semesters after removing entry")
- 
 
     def test_get_durations(self):
         '''test if correct semester durations are returned'''
@@ -553,8 +564,8 @@ class UnitTestStudy(unittest.TestCase):
                 mod_duration = 0
                 for cat in data_categories:
                     for dur in data_durations:
-                        _,_,entry = study.add_entry(semesterName=sem,
-                                                moduleName=mod, category=cat)
+                        _, _, entry = study.add_entry(semesterName=sem,
+                                                      moduleName=mod, category=cat)
                         entry.stop_time = entry.start_time \
                             + datetime.timedelta(seconds=dur)
                         mod_duration += dur
