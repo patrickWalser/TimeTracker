@@ -19,6 +19,23 @@ class Entry:
         self.category = category
         self.comment = comment
 
+    def __eq__(self, other):
+        '''can be used to compare Entry objects
+        
+        check is done based on the equality of the properties
+
+        other: instance to be checked for equality
+        
+        returns: True if equal False if not
+                  NotImplemented if other is no Entry
+        '''
+        if not isinstance(other, Entry):
+            return NotImplemented
+
+        return self.start_time == other.start_time and \
+            self.stop_time == other.stop_time and \
+            self.category == other.category and self.comment == other.comment
+
     def stop(self):
         '''stops the entry
 
@@ -55,6 +72,22 @@ class Module:
         self.ECTS = ECTS
         self.start_module(duration=duration)
 
+    def __eq__(self, other):
+        '''can be used to compare Module objects
+        
+        check is done based on the equality of the properties
+
+        other: instance to be checked for equality
+        
+        returns: True if equal False if not
+                  NotImplemented if other is no Entry
+        '''
+        if not isinstance(other, Module):
+            return NotImplemented
+
+        return self.entries == other.entries and self.name == other.name and self.ECTS == other.ECTS and self.start == other.start and self.stop == other.stop and self.plannedEnd == other.plannedEnd
+
+
     def start_module(self, duration):
         '''Starts the module.
 
@@ -74,6 +107,13 @@ class Module:
         entry = Entry(category=category, comment=comment)
         self.entries.append(entry)
         return entry
+
+    def remove_entry(self, entry):
+        '''removes an entry
+        
+        entry: the entry to be removed
+        '''
+        self.entries.remove(entry)
 
     def get_durations(self):
         '''Creates a list of the duration of each entry
@@ -118,6 +158,21 @@ class Semester:
         self.ECTS = 0  # TODO: are ECTS necessary?
         self.name = name
 
+    def __eq__(self, other):
+        '''can be used to compare Semester objects
+        
+        check is done based on the equality of the properties
+
+        other: instance to be checked for equality
+        
+        returns: True if equal False if not
+                  NotImplemented if other is no Entry
+        '''
+        if not isinstance(other, Module):
+            return NotImplemented
+        
+        return self.modules == other.modules and self.ECTS == other.ECTS and self.name == other.name
+    
     def add_module(self, module: Module):
         '''adds a Module to the list
 
@@ -145,6 +200,22 @@ class Semester:
             self.add_module(mod)
         entry = mod.add_entry(category=category, comment=comment)
         return mod, entry
+
+    def remove_entry(self, module, entry):
+        '''removes an entry
+        
+        if the module does not hold an entry anymore
+        it is also removed
+        
+        module: the module
+        entry: the entry
+        '''
+        mod = self.get_module(module.name)
+        if mod is None:
+            raise ValueError()
+        mod.remove_entry(entry)
+        if len(mod.entries) == 0:
+            self.modules.remove(mod)
 
     def get_durations(self):
         '''Creates a list of the duration of each module
@@ -234,6 +305,22 @@ class Study:
         mod, entry = sem.add_entry(moduleName=moduleName, category=category,
                                    comment=comment)
         return sem, mod, entry
+
+    def remove_entry(self, semester, module, entry):
+        '''removes an entry
+        
+        if the semester does not hold a module anymore it is deleted
+        
+        semester: the semester
+        module: the module
+        entry: the entry
+        '''
+        sem = self.get_semester(semester.name)
+        if sem is None:
+            raise ValueError
+        sem.remove_entry(module, entry)
+        if len(sem.modules) == 0:
+            self.semesters.remove(sem)
 
     def get_durations(self):
         '''Creates a list of the duration of each semester

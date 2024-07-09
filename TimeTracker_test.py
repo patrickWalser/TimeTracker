@@ -14,6 +14,21 @@ class UnitTestEnry(unittest.TestCase):
         with self.assertRaises(TypeError):
             e = TimeTracker.Entry()
 
+    def test_equal(self):
+        '''
+        Test the __eq__ check
+        '''
+        e = TimeTracker.Entry("a")
+        e1 = TimeTracker.Entry("b")
+        sleep(1)
+        e2 = TimeTracker.Entry("a")
+        x = TimeTracker.Module(name="")
+
+        self.assertEqual(e==x, False, "Comparing to wrong Type did not return NotImplemented")
+        self.assertEqual(e==e,True,"Comparison between same instance did not return equality")
+        self.assertEqual(e==e1, False, "Comparison of different objects returned equality")
+        self.assertEqual(e==e2, False, "Comparison of different objects returned equality")
+
     def test_stop(self):
         '''
         test the Entry.stop() method
@@ -89,6 +104,21 @@ class UnitTestModule(unittest.TestCase):
 
         self.assertTrue(len(mod.entries) == 0, msg="entry list is not empty")
 
+    def test_equal(self):
+        '''
+        Test the __eq__ check
+        '''
+        m = TimeTracker.Module("a")
+        m1 = TimeTracker.Module("b")
+        sleep(1)
+        m2 = TimeTracker.Module("a")
+        e = TimeTracker.Entry("")
+
+        self.assertEqual(m==e, False, "Comparing to wrong Type did not return NotImplemented")
+        self.assertEqual(m==m,True,"Comparison between same instance did not return equality")
+        self.assertEqual(m==m1, False, "Comparison of different objects returned equality")
+        self.assertEqual(m==m2, False, "Comparison of different objects returned equality")
+
     def test_start_module(self):
         '''test the start_module function'''
 
@@ -126,6 +156,32 @@ class UnitTestModule(unittest.TestCase):
         self.assertAlmostEqual(first=start_time, second=entry.start_time,
                                msg="Added entry was not started correctly",
                                delta=datetime.timedelta(seconds=0.1))
+
+    def test_removeEntry(self):
+        ''' tests if an entry is removed correctly'''
+
+        mod = TimeTracker.Module("test")
+
+        # test with missing argument
+        with self.assertRaises(TypeError):
+            mod.remove_entry()
+
+        # generate data
+        e = mod.add_entry(category="")
+        e1 = mod.add_entry(category="a")
+
+        # remove entry
+        mod.remove_entry(e)
+        self.assertEqual(len(mod.entries), 1, 
+                         "Wrong length of list after removing entry")
+        
+        # remove non existing entry
+        with self.assertRaises(ValueError):
+            mod.remove_entry(e)
+
+        mod.remove_entry(e1)
+        self.assertEqual(len(mod.entries), 0, 
+                         "Wrong length of list after removing entry")
 
     def test_get_durations(self):
         ''' tests if the durations are returned correct'''
@@ -183,6 +239,22 @@ class UnitTestSemester(unittest.TestCase):
         with self.assertRaises(TypeError):
             sem = TimeTracker.Semester()
 
+    def test_equal(self):
+        '''
+        Test the __eq__ check
+        '''
+        s = TimeTracker.Semester("a")
+        s1 = TimeTracker.Semester("b")
+        sleep(1)
+        s2 = TimeTracker.Semester("a")
+        e = TimeTracker.Entry("")
+
+        self.assertEqual(s==e, False, "Comparing to wrong Type did not return NotImplemented")
+        self.assertEqual(s==s,True,"Comparison between same instance did not return equality")
+        self.assertEqual(s==s1, False, "Comparison of different objects returned equality")
+        self.assertEqual(s==s2, False, "Comparison of different objects returned equality")
+
+
     def test_add_module(self):
         '''tests if modules can be added to semester'''
         sem = TimeTracker.Semester("semester")
@@ -233,6 +305,44 @@ class UnitTestSemester(unittest.TestCase):
         self.assertEqual(first=2, second=len(sem.modules[0].entries),
                          msg="list of entries in mod has wrong length")
 
+    def test_remove_entry(self):
+        '''tests if entries are removed correctly
+        and if modules without entries are deleted
+        '''
+        sem = TimeTracker.Semester("semester")
+
+        # wrong arguments
+        with self.assertRaises(TypeError):
+            sem.remove_entry(moduleName="mod")
+        with self.assertRaises(TypeError):
+            sem.remove_entry(category="cat")
+        with self.assertRaises(TypeError):
+            sem.remove_entry()
+
+        # generate data
+        mod, entry = sem.add_entry(moduleName="mod", category="cat")
+        _,entry2 = sem.add_entry(moduleName="mod", category="cat", comment="a")
+        mod2, entry3 = sem.add_entry(moduleName="mod2", category="cat")
+
+        # remove existing entry
+        sem.remove_entry(mod, entry)
+        self.assertEqual(len(sem.modules),2,
+                         "Wrong length of module list after removing an entry")
+
+        self.assertEqual(len(mod.entries), 1, 
+                         "Wrong length of entry list after removing entry \
+                            from module")
+        
+        # remove non existing entry
+        with self.assertRaises(ValueError):
+            sem.remove_entry(mod, entry)
+        
+        
+        # remove last entry of module
+        sem.remove_entry(mod, entry2)
+        self.assertEqual(len(sem.modules),1,
+                         "Wrong length of module list after removing an entry")
+        
     def test_get_durations(self):
         '''test if correct module durations are returned'''
 
@@ -386,6 +496,44 @@ class UnitTestStudy(unittest.TestCase):
         self.assertEqual(first=1,
                          second=len(study.semesters[0].modules[1].entries),
                          msg="list of entries in mod has wrong length")
+
+    def test_remove_entry(self):
+        '''tests if removing an entry works'''
+
+        study = TimeTracker.Study(ECTS=180, hoursPerECTS=30)
+
+        # wrong arguments
+        with self.assertRaises(TypeError):
+            study.remove_entry()
+        with self.assertRaises(TypeError):
+            study.remove_entry(semesterName="")
+        with self.assertRaises(TypeError):
+            study.remove_entry(semesterName="", moduleName="")
+        with self.assertRaises(TypeError):
+            study.remove_entry(moduleName="", category="")
+
+        # generate data
+        sem,mod,entry = study.add_entry(semesterName="sem", moduleName="mod",
+                                category="cat")
+        _,mod1,entry1 = study.add_entry(semesterName="sem", moduleName="mod1",
+                                category="cat")
+        sem2,_,entry2 = study.add_entry(semesterName="sem2", moduleName="mod1",
+                                category="cat")
+        
+        study.remove_entry(sem, mod, entry)
+        self.assertEqual(len(study.semesters), 2,
+                         "Wrong amount of semesters after removing entry")
+        self.assertEqual(len(sem.modules), 1,
+                         "Wrong length of module list after removing entry")
+        
+        # remove non existing entry
+        with self.assertRaises(ValueError):
+            study.remove_entry(sem, mod, entry)
+
+        study.remove_entry(sem, mod1, entry1)
+        self.assertEqual(len(study.semesters),1,
+                         "Wrong amount of semesters after removing entry")
+ 
 
     def test_get_durations(self):
         '''test if correct semester durations are returned'''
