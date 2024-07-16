@@ -4,6 +4,7 @@ from tkinter import messagebox, ttk, Frame
 import datetime
 import pickle
 import base64
+from charts import ChartType, ChartFactory
 from tkcalendar import DateEntry
 
 
@@ -486,7 +487,8 @@ class TimeTrackerGUI:
         self.analyse_btn = tk.Button(
             header_view, text="Analyse",
             command=lambda: [analyse_view.tkraise(),
-                             self.generate_accordion(analyse_view)]).grid(row=0, column=1)
+                             self.generate_accordion(analyse_view),
+                             self.print_chart(self.tracker.study)]).grid(row=0, column=1)
 
         # Tracker View
         # self.label =tk.Label(tracker_view, text="Tracker View").pack()
@@ -564,11 +566,83 @@ class TimeTrackerGUI:
 
         self.treeview_frame.grid(row=2, columnspan=8)
         # Analyse View
-        # self.label_analyse = tk.Label(analyse_view, text="Analyse View").pack()
         # TODO:
+        self.chart_frame = tk.Frame(analyse_view)
+        self.chart_frame.grid(row=0, column = 1, sticky='nw')
+        self.active_chart = ChartType.PIE
+        chart_frame_header = tk.Frame(self.chart_frame)
+        chart_frame_header.grid(row=0, sticky='nw')
+        btn_burndown = tk.Button(chart_frame_header,text="Burndwon-Chart", command=lambda: self.set_active_chart(ChartType.BURNDOWN))
+        btn_burndown.grid(row=0, column=0, sticky='nw')
+        btn_pie = tk.Button(chart_frame_header, text="Pie-Chart", command=lambda: self.set_active_chart(ChartType.PIE))
+        btn_pie.grid(row=0, column=1, sticky='nw')
+
+        self.plot_frame = tk.Frame(self.chart_frame)
+        self.plot_frame.grid(row=1, sticky = 'news')
+        self.chart_scope = self.tracker.study
+        self.chart = None
+
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         tracker_view.tkraise()
+
+    def print_chart(self, scope):
+        # prevent memory leak because matplotlib figure remains open
+        # TODO: write to Testprotocol
+        # TODO: Burndown check for instance of scope
+        if self.chart:
+            self.chart.destroy()
+
+        if self.active_chart == ChartType.BURNDOWN:
+            stopTimes = []
+            values = []
+            start = []
+            total_work = 0
+            planned_end = 0
+            end = []
+            if isinstance(scope,Study):
+                total_work = scope.ECTS
+                for sem in scope.semesters:
+                    for mod in sem.modules:
+                        start.append(mod.start)
+                        end.append(mod.plannedEnd)
+                        if mod.stop != None:
+                            stopTimes.append(mod.stop)
+                            values.append(mod.ECTS)
+            elif isinstance(scope,Semester):
+                # Only Modules which are already tracked are respected in the
+                # diagram
+                for mod in scope.modules:
+                    start.append(mod.start)
+                    end.append(mod.plannedEnd)
+                    total_work += mod.ECTS
+                    if mod.stop != None:
+                        stopTimes.append(mod.stop)
+                        values.append(mod.ECTS)
+            elif isinstance(scope,Module):
+                pass
+            
+            end.sort(reverse=True)
+            planned_end = end[0]
+
+            start.sort()
+            stopTimes.append(start[0])
+            values.append(0)
+
+            sortedList = sorted(zip(stopTimes,values))
+            a = [x for x,_ in sortedList]
+            b = [x for _,x in sortedList]
+            self.chart = ChartFactory.create_chart(self.active_chart, a, b, total_work, planned_end)
+        else:
+            durations,_ = scope.get_durations()
+            names = [dur.get('Name')for dur in durations]
+            values = [dur.get('Duration').total_seconds() for dur in durations]
+            self.chart = ChartFactory.create_chart(self.active_chart, names, values)
+        self.chart.plot(self.plot_frame)
+
+    def set_active_chart(self, chart_type):
+        self.active_chart = chart_type
+        self.print_chart(self.chart_scope)
 
     def generate_accordion(self, parent):
         try:
@@ -581,10 +655,9 @@ class TimeTrackerGUI:
 
         for sem in self.tracker.study.semesters:
             section = self.accordion.add_section(
-                sem.name, lambda sem=sem: print("sem: " + sem.name+" clicked"))
+                sem.name, lambda sem=sem: self.print_chart(sem))
             for mod in sem.modules:
-                section.add_element(mod.name, lambda sem=sem, mod=mod: print(
-                    "sem: " + sem.name + " mod: " + mod.name+" clicked"))
+                section.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
 
     def update_label(self):
         duration = str(self.tracker.current_entry.get_duration()
