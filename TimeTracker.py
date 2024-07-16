@@ -396,7 +396,8 @@ class TimeTracker:
     '''Main of the TimeTracker
 
     Holds a study.
-    Holds the currentEntry
+    Holds the currentEntry.
+    Holds the lastEntry.
     '''
 
     def __init__(self, ECTS, hoursPerECTS):
@@ -407,6 +408,7 @@ class TimeTracker:
         '''
         self.study = Study(ECTS, hoursPerECTS)
         self.current_entry = None
+        self.last_entry = None
 
     def start_tracking(self, semesterName, moduleName, category, comment=""):
         '''starts the tracking.
@@ -428,6 +430,11 @@ class TimeTracker:
             raise RuntimeError("Currrently no tracking is active")
 
         self.current_entry.stop()
+        self.last_semester = self.current_semester
+        self.last_module = self.current_module
+        self.last_entry = self.current_entry
+        self.current_semester = None
+        self.current_module = None
         self.current_entry = None
 
 class DateTimeFrame(Frame):
@@ -468,7 +475,6 @@ class TimeTrackerGUI:
         self.root.geometry('900x450')
 
         self.tracker = TimeTracker(180, 30)
-        self.load_data()
 
         # separate window into frames using grid
         header_view = Frame(root)
@@ -560,7 +566,6 @@ class TimeTrackerGUI:
 
         self.tree.bind("<Double-Button-1>", self.tree_click)
         self.tree.pack(side='left')
-        self.update_treeview()
 
         self.yscroll = ttk.Scrollbar(self.treeview_frame, orient=tk.VERTICAL,
                                      command=self.tree.yview,)
@@ -587,7 +592,9 @@ class TimeTrackerGUI:
 
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.load_data()
         tracker_view.tkraise()
+        self.update_treeview()
 
     def print_chart(self, scope):
         # prevent memory leak because matplotlib figure remains open
@@ -851,12 +858,16 @@ class TimeTrackerGUI:
 
     def save_data(self):  # TODO: save in correct format
         with open("time_tracking_data.json", "wb") as file:
-            pickle.dump(self.tracker.study, file, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.tracker, file, pickle.HIGHEST_PROTOCOL)
 
     def load_data(self):
         try:
             with open("time_tracking_data.json", "rb") as file:
-                self.tracker.study = pickle.load(file)
+                self.tracker = pickle.load(file)
+                self.semester_var.set(self.tracker.last_semester.name)
+                self.module_var.set(self.tracker.last_module.name)
+                self.category_var.set(self.tracker.last_entry.category)
+                self.comment_var.set(self.tracker.last_entry.comment)
         except FileNotFoundError:
             self.tracker.study = Study(180, 30)
         except Exception as e:
