@@ -164,13 +164,15 @@ class Accordion(ttk.Frame):
         ''' the scroll event
 
         handles unix and windows scrolling
+        only scrolls if canvas is too big for the available space
         '''
-        if event.num == 4:  # Unix scroll up
-            self.canvas.yview_scroll(-1, "units")
-        elif event.num == 5:  # Unix scroll down
-            self.canvas.yview_scroll(1, "units")
-        else:  # Windows
-            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        if self.canvas.bbox("all")[3] > self.winfo_height():
+            if event.num == 4:  # Unix scroll up
+                self.canvas.yview_scroll(-1, "units")
+            elif event.num == 5:  # Unix scroll down
+                self.canvas.yview_scroll(1, "units")
+            else:  # Windows
+                self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
     def add_section(self, name, command, sub_elements=None):
         ''' add a section to the accordion
@@ -226,6 +228,7 @@ if __name__ == "__main__":
     root.title("Modern Accordion Navigation Bar")
 
     accordion = Accordion(root)
+    accordion.pack(fill='both', expand=True)
 
     # Example elements with multiple levels
     s = accordion.add_section("Section 1", lambda: print("Section 1 clicked"))
