@@ -532,10 +532,13 @@ class TimeTrackerGUI:
             tracker_view, text="Start", command=self.btn_start_stop_click)
         self.start_stop_btn.grid(row=1, column=0)
 
+        finish_btn = tk.Button(tracker_view,text='Finish module', command= lambda:self.btn_finish_click())
+        finish_btn.grid(row=1, column=1,sticky='news')
+
         self.current_duration_label = tk.Label(
             tracker_view, text="")
         self.current_duration_label.grid(
-            row=1, column=1, columnspan=3, sticky="W")
+            row=1, column=2, columnspan=3, sticky="W")
 
         self.treeview_frame = Frame(tracker_view)
 
@@ -777,6 +780,11 @@ class TimeTrackerGUI:
             self.update_label()
 
         self.update_treeview()
+
+    def btn_finish_click(self):
+        sem = self.tracker.study.get_semester(self.semester_var.get())
+        mod = sem.get_module(self.module_var.get())
+        mod.finish_module()
 
     def update_combo_semesters(self):
         semesters = [s.name for s in self.tracker.study.semesters]
