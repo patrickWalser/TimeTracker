@@ -98,6 +98,7 @@ class Module:
         '''
         self.start = datetime.datetime.now()
         self.plannedEnd = self.start + datetime.timedelta(weeks=duration)
+        self.stop = None
 
     def add_entry(self, category, comment=""):
         '''creates an entry and adds it to the list of entries
@@ -428,7 +429,6 @@ class TimeTracker:
 
         self.current_entry.stop()
         self.current_entry = None
-        pass
 
 class DateTimeFrame(Frame):
     def __init__(self, parent, label):
