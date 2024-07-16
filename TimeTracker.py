@@ -670,14 +670,14 @@ class TimeTrackerGUI:
                 section.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
 
     def update_label(self):
-        duration = str(self.tracker.current_entry.get_duration()
-                       ).split('.')[0]  # remove micros
-        cat = self.tracker.current_entry.category
-        mod = self.tracker.current_module.name
-        self.current_duration_label.configure(
-            text=f"Tracking: {cat} in module {mod} for {duration}")
-
         if self.is_tracking:
+            duration = str(self.tracker.current_entry.get_duration()
+                        ).split('.')[0]  # remove micros
+            cat = self.tracker.current_entry.category
+            mod = self.tracker.current_module.name
+            self.current_duration_label.configure(
+                text=f"Tracking: {cat} in module {mod} for {duration}")
+
             self.root.after(1000, self.update_label)
 
     def combo_update(self, index, value, op):
