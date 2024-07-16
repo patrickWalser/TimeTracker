@@ -580,21 +580,22 @@ class TimeTrackerGUI:
         self.active_chart = ChartType.PIE
         chart_frame_header = tk.Frame(self.chart_frame)
         chart_frame_header.grid(row=0, sticky='nw')
-        btn_burndown = tk.Button(chart_frame_header,text="Burndwon-Chart", command=lambda: self.set_active_chart(ChartType.BURNDOWN))
+        btn_burndown = tk.Button(chart_frame_header,text="Burndown-Chart", command=lambda: self.set_active_chart(ChartType.BURNDOWN))
         btn_burndown.grid(row=0, column=0, sticky='nw')
         btn_pie = tk.Button(chart_frame_header, text="Pie-Chart", command=lambda: self.set_active_chart(ChartType.PIE))
         btn_pie.grid(row=0, column=1, sticky='nw')
 
         self.plot_frame = tk.Frame(self.chart_frame)
         self.plot_frame.grid(row=1, sticky = 'news')
-        self.chart_scope = self.tracker.study
-        self.chart = None
-
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.load_data()
-        tracker_view.tkraise()
         self.update_treeview()
+
+        self.chart_scope = self.tracker.study
+        self.chart = None
+        
+        tracker_view.tkraise()
 
     def print_chart(self, scope):
         # prevent memory leak because matplotlib figure remains open
