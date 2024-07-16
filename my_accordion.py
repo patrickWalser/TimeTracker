@@ -94,6 +94,8 @@ class Accordion_Element(ttk.Frame):
     def add_element(self, name, command, sub_elements=None):
         ''' add a sub_element
 
+        updates the accordion width
+
         name: the name
         command: the command tobe executet at the click ecent
         sub_elements: list of sub_elements
@@ -103,6 +105,7 @@ class Accordion_Element(ttk.Frame):
         e = Accordion_Element(self.accordion, self.sub_element_frame, name,
                               command=command, sub_elements=sub_elements, level=self.level + 1)
         self.sub_elements.append(e)
+        self.accordion.update_canvas_width()
         return e
 
     def destroy(self):
@@ -180,6 +183,7 @@ class Accordion(ttk.Frame):
         a section is also an Accordion_Element but at the highest level
         adds the section to the section_list
         reorders the accordion
+        updates the width
 
         name: the name of the section
         command: the command to be executed at the click event
@@ -192,6 +196,7 @@ class Accordion(ttk.Frame):
         s.grid(row=len(self.sections), column=0, sticky='ew')
         self.sections.append(s)
         self.reorder()
+        self.update_canvas_width()
         return s
 
     def reorder(self):
@@ -215,6 +220,29 @@ class Accordion(ttk.Frame):
             0, 0), relief="flat", background='#e0e0e0')
         style.map(style_name, background=[
                   ('active', '#d0d0d0')], foreground=[('active', '#000000')])
+
+    def update_canvas_width(self):
+        ''' update the canvas width based on the width of the widest element.'''
+        self.canvas.update_idletasks()
+        # find the maximum width
+        max_width = 0
+        for section in self.sections:
+            width = section.element_btn.winfo_reqwidth() + \
+                section.level * 10 + 20  # Including padding
+            max_width = max(max_width, width)
+            for elem in section.sub_elements:
+                width = elem.element_btn.winfo_reqwidth() + \
+                    elem.level * 10 + 20  # Including padding
+                max_width = max(max_width, width)
+                for sub_elem in elem.sub_elements:
+                    width = sub_elem.element_btn.winfo_reqwidth() + \
+                         sub_elem.level * 10 +  20  # Including padding
+                    max_width = max(max_width, width)
+
+        # configure canvas
+        self.canvas.config(width=max_width)
+        self.canvas.itemconfig(self.canvas.create_window(
+            (0, 0), window=self.scrollable_frame, anchor='nw'), width=max_width)
 
     def destroy(self):
         ''' destroy all sections and the accordion '''
