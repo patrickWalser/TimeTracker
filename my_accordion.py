@@ -1,14 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
 
-
 class Accordion_Element(ttk.Frame):
     '''Is an Element in an Accordion
 
     Extends ttk.Frame
-    Has a Button and a Frame for potential sub_elements.
-    Clicking the button shows the Frame with subelememts, calls
-    a specific command and reorders the accordion.
+    Has two Buttons and a Frame for potential sub_elements.
+    Clicking the first button calls a specific command
+    Clicking the second button shows the Frame with subelememts
+    and reorders the accordion.
     Holds a list of sub_elements
     '''
 
@@ -37,7 +37,7 @@ class Accordion_Element(ttk.Frame):
         self.parent = parent
         self.accordion = accordion
 
-        # Create button for the element
+        # Create buttons for the element
         style_name = f'Custom{level}.TButton'
         self.accordion.create_style(style_name, level)
 
@@ -45,23 +45,33 @@ class Accordion_Element(ttk.Frame):
         self.element_btn.grid(row=self.row, column=0,
                               sticky='ew', padx=level * 10, pady=(0, 2))
 
+        self.collapse_btn = ttk.Button(
+            self, text="+", style=style_name, width=2)
+        self.collapse_btn.grid(row=self.row, column=1,
+                               sticky="e", padx=0, pady=(0, 0))
+
         # Create frame for sub-elements
         self.sub_element_frame = ttk.Frame(self)
         self.sub_element_frame.grid(row=self.row + 1, column=0, sticky='ew')
         self.sub_element_frame.grid_remove()
 
-        self.element_btn.config(command=lambda: self.toggle_element(command))
+        self.element_btn.config(command=lambda: command())
+        self.collapse_btn.config(command=lambda: self.toggle_element())
 
-    def toggle_element(self, command):
+    def toggle_element(self):
         '''click event of the button
 
         visible state of the element is toggled
         accordion is reordered
-        specific command is called
+        text of the collapse button is toggled
         '''
         self.visible = not self.visible
+        if (self.visible):
+            self.collapse_btn.config(text="-")
+        else:
+            self.collapse_btn.config(text="+")
+
         self.accordion.reorder()
-        command()
 
     def reorder(self, row=0):
         '''reoerder the element
@@ -76,6 +86,13 @@ class Accordion_Element(ttk.Frame):
         self.row = row
         self.element_btn.grid(row=row, column=0, sticky='ew',
                               padx=self.level * 10, pady=(0, 2))
+
+        if len(self.sub_elements) > 0:
+            self.collapse_btn.grid(
+                row=self.row, column=1, sticky="e", padx=0, pady=(0, 2))
+        else:
+            self.collapse_btn.grid_remove()
+
         row += 1
         if self.visible:
             # show and order the sub_elements_frame
@@ -228,15 +245,18 @@ class Accordion(ttk.Frame):
         max_width = 0
         for section in self.sections:
             width = section.element_btn.winfo_reqwidth() + \
+                section.collapse_btn.winfo_reqwidth() + \
                 section.level * 10 + 20  # Including padding
             max_width = max(max_width, width)
             for elem in section.sub_elements:
                 width = elem.element_btn.winfo_reqwidth() + \
+                    elem.collapse_btn.winfo_reqwidth() + \
                     elem.level * 10 + 20  # Including padding
                 max_width = max(max_width, width)
                 for sub_elem in elem.sub_elements:
                     width = sub_elem.element_btn.winfo_reqwidth() + \
-                         sub_elem.level * 10 +  20  # Including padding
+                        sub_elem.collapse_btn.winfo_reqwidth() + \
+                        sub_elem.level * 10 + 20  # Including padding
                     max_width = max(max_width, width)
 
         # configure canvas
