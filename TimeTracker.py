@@ -502,7 +502,7 @@ class TimeTrackerGUI:
         '''
         self.root = root
         self.root.title("TimeTracker")
-        self.root.geometry('900x450')
+        self.root.geometry('880x600')
 
         #self.tracker = TimeTracker(180, 30)
 
@@ -521,13 +521,14 @@ class TimeTrackerGUI:
         
         # separate window into frames using grid
         header_view = Frame(root)
-        header_view.grid(row=0, column=0, sticky='news')
+        header_view.grid(row=0, column=0, sticky='news', padx=20, pady=10)
 
         # two different frames to switch between views
         tracker_view = Frame(root)
-        tracker_view.grid(row=1, sticky='news')
+        tracker_view.grid(row=1, sticky='news', padx=20, pady=5)
         analyse_view = Frame(root)
-        analyse_view.grid(row=1, sticky='news')
+        analyse_view.grid(row=1, sticky='news', padx=20, pady=5)
+        tracker_view.tkraise()
 
         # Buttons to switch between the two views
         self.tracker_btn = tk.Button(
@@ -542,7 +543,6 @@ class TimeTrackerGUI:
                              self.print_chart(self.tracker.study)]).grid(row=0, column=1)
 
         # Tracker View
-        # self.label =tk.Label(tracker_view, text="Tracker View").pack()
         self.semester_label = tk.Label(
             tracker_view, text="Semester: ").grid(row=0, column=0)
         self.semester_var = tk.StringVar()
@@ -581,10 +581,11 @@ class TimeTrackerGUI:
         self.is_tracking = False
         self.start_stop_btn = tk.Button(
             tracker_view, text="Start", command=self.btn_start_stop_click)
-        self.start_stop_btn.grid(row=1, column=0)
+        self.start_stop_btn.grid(row=1, column=0, padx=0, pady=10)
 
-        finish_btn = tk.Button(tracker_view,text='Finish module', command= lambda:self.btn_finish_click())
-        finish_btn.grid(row=1, column=1,sticky='news')
+        finish_btn = tk.Button(
+            tracker_view, text='Finish module', command=lambda: self.btn_finish_click())
+        finish_btn.grid(row=1, column=1, sticky='news', padx=0, pady=10)
 
         self.current_duration_label = tk.Label(
             tracker_view, text="")
@@ -595,7 +596,7 @@ class TimeTrackerGUI:
         self.treeview_frame = Frame(tracker_view)
 
         self.tree = ttk.Treeview(self.treeview_frame, columns=(
-            'Module', 'Category', 'Comment', 'Start', 'Duration'), height=7)
+            'Module', 'Category', 'Comment', 'Start', 'Duration'), height=10)
         self.tree.heading('#0', text='Semester')
         self.tree.heading('Module', text='Module')
         self.tree.heading('Category', text='Category')
@@ -603,12 +604,12 @@ class TimeTrackerGUI:
         self.tree.heading('Start', text='Start')
         self.tree.heading('Duration', text='Duration')
 
-        self.tree.column('#0', minwidth=0, width=100, stretch=True)
-        self.tree.column('Module', minwidth=0, width=100, stretch=True)
-        self.tree.column('Category', minwidth=0, width=100, stretch=True)
-        self.tree.column('Comment', minwidth=0, width=100, stretch=True)
-        self.tree.column('Start', minwidth=0, width=100, stretch=True)
-        self.tree.column('Duration', minwidth=0, width=100, stretch=True)
+        self.tree.column('#0', minwidth=0, width=140, stretch=True)
+        self.tree.column('Module', minwidth=0, width=180, stretch=True)
+        self.tree.column('Category', minwidth=0, width=120, stretch=True)
+        self.tree.column('Comment', minwidth=0, width=120, stretch=True)
+        self.tree.column('Start', minwidth=0, width=125, stretch=True)
+        self.tree.column('Duration', minwidth=0, width=80, stretch=True)
 
         self.tree.bind("<Double-Button-1>", self.tree_click)
         self.tree.pack(side='left')
@@ -618,11 +619,13 @@ class TimeTrackerGUI:
         self.tree['yscrollcommand'] = self.yscroll.set
         self.yscroll.pack(side='right', fill='y')
 
-        self.treeview_frame.grid(row=2, columnspan=8)
+        self.treeview_frame.grid(row=2, columnspan=8, sticky='news')
+
         # Analyse View
         # TODO:
+        self.accordion = None
         self.chart_frame = tk.Frame(analyse_view)
-        self.chart_frame.grid(row=0, column = 1, sticky='nw')
+        self.chart_frame.grid(row=0, column=1, sticky='news')
         self.active_chart = ChartType.PIE
         chart_frame_header = tk.Frame(self.chart_frame)
         chart_frame_header.grid(row=0, sticky='nw')
@@ -833,9 +836,6 @@ class TimeTrackerGUI:
             # call this method after one second
             self.root.after(1000, self.update_label)
 
-    def combo_update(self, index, value, op):
-        self.update_treeview()
-
     def tree_click(self, event):
         '''click event of the treeview
 
@@ -894,12 +894,15 @@ class TimeTrackerGUI:
             self.module_end.grid(row=3, columnspan=4, sticky='w')
             self.module_end.set_datetime(mod.stop)
 
-        add_btn =tk.Button(edit_window, text = "Add new entry", command = lambda s = sem, m=mod, e=entry:self.add_new_entry())
-        add_btn.grid(row=4, column = 0, sticky='news')
-        edit_btn =tk.Button(edit_window, text='Edit entry', command = lambda s = sem, m=mod, e = entry: self.edit(s, m, e))
+        add_btn = tk.Button(edit_window, text="Save as new entry",
+                            command=lambda s=sem, m=mod, e=entry: self.add_new_entry())
+        add_btn.grid(row=4, column=0, sticky='news')
+        edit_btn = tk.Button(edit_window, text='Save entry',
+                             command=lambda s=sem, m=mod, e=entry: self.edit(s, m, e))
         edit_btn.grid(row=4, column=1, sticky='news')
-        remove_btn = tk.Button(edit_window,text='Delete entry', command = lambda s = sem, m=mod, e = entry: self.remove(s, m, e))
-        remove_btn.grid(row=4, column = 2, sticky='news')
+        remove_btn = tk.Button(edit_window, text='Delete entry',
+                               command=lambda s=sem, m=mod, e=entry: self.remove(s, m, e))
+        remove_btn.grid(row=4, column=2, sticky='news')
 
     def remove(self, sem, mod, entry):
         '''remove an entry
@@ -910,7 +913,6 @@ class TimeTrackerGUI:
         '''
         self.tracker.study.remove_entry(sem, mod, entry)
         self.update_treeview()
-        print("removed entry")
 
     def edit(self, sem, mod, entry):
         ''' edit an entry
@@ -941,8 +943,7 @@ class TimeTrackerGUI:
         e.start_time = self.start_time.get_datetime()
         e.stop_time = self.stop_time.get_datetime()
         self.update_treeview()
-        print("added entry")
-        return s,m,e
+        return s, m, e
 
     def btn_start_stop_click(self):
         ''' start or stop the tracking
