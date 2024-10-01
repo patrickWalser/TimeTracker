@@ -719,20 +719,59 @@ class TimeTrackerGUI:
         self.print_chart(self.chart_scope)
 
     def generate_accordion(self, parent):
-        try:
-            self.accordion.destroy()
-        except:
-            pass
+        '''generate an accordion
+        
+        generates an accordion depending on the data of the tracker
+        
+        parent: the frame where the accordion is placed
+        '''
+        # create a new accordion if none exists
+        if self.accordion is None:
+            self.accordion=Accordion(parent)
+            self.accordion.grid(row=0, column=0, sticky='ns')
 
-        self.accordion = Accordion(parent)
-        self.accordion.grid(row=0, column=0, sticky='ns')
+        # remove deleted entries
+        semesterNames = [sem.name for sem in self.tracker.study.semesters]
+        for sec in self.accordion.sections:
+            if sec.name not in semesterNames:
+                #delete the section
+                self.accordion.remove_section(sec)
+                continue
+            
+            sem = self.tracker.study.get_semester(sec.name)
+            moduleNames = [mod.name for mod in sem.modules]
+            for entry in sec.sub_elements:
+                if entry.name not in moduleNames:
+                    #delete the entry
+                    sec.remove_element(entry)
+                    continue
 
+        # add new entries
         for sem in self.tracker.study.semesters:
-            section = self.accordion.add_section(
-                sem.name, lambda sem=sem: self.print_chart(sem))
-            for mod in sem.modules:
-                section.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
-
+            foundSem = False
+            for sec in self.accordion.sections:
+                if sem.name == sec.name:
+                    # found the semester, check for the modules and continue with next semester
+                    foundSem = True
+                    for mod in sem.modules:
+                        foundMod = False
+                        for entry in sec.sub_elements:
+                            if mod.name == entry.name:
+                                # found the module continue with next module
+                                foundMod = True
+                                break
+                        if not foundMod:
+                            sec.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
+                    break
+            if not foundSem:
+                section = self.accordion.add_section(
+                    sem.name, lambda sem=sem: self.print_chart(sem))
+                for mod in sem.modules:
+                    # add all modules because whole section was added
+                    section.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
+        self.accordion.reorder()
+                
+                    
     def update_label(self):
         if self.is_tracking:
             duration = str(self.tracker.current_entry.get_duration()
