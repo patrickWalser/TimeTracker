@@ -58,6 +58,23 @@ class Accordion_Element(ttk.Frame):
         self.element_btn.config(command=lambda: command())
         self.collapse_btn.config(command=lambda: self.toggle_element())
 
+    def __eq__(self, other):
+        '''can be used to compare Accordion_Element objects
+
+        check is done based on the equality of the properties
+
+        other: instance to be checked for equality
+
+        returns: True if equal False if not
+                  NotImplemented if other is no AccordionElement
+        '''
+        if not isinstance(other, Accordion_Element):
+            return NotImplemented
+
+        return self.name == other.name and self.level == other.level \
+            and self.row == other.row and self.visible == other.visible \
+            and self.parent == other.parent and self.accordion == other.accordion
+
     def toggle_element(self):
         '''click event of the button
 
@@ -124,6 +141,17 @@ class Accordion_Element(ttk.Frame):
         self.sub_elements.append(e)
         self.accordion.update_canvas_width()
         return e
+    def remove_element(self, element):
+        ''' remove a sub_element
+        
+        updates the accordion width
+
+        element: the Accordion_Element to remove
+        '''
+
+        self.sub_elements.remove(element)
+        element.destroy()
+        self.accordion.update_canvas_width()
 
     def destroy(self):
         ''' destroys the element and its sub_elements'''
@@ -216,6 +244,19 @@ class Accordion(ttk.Frame):
         self.update_canvas_width()
         return s
 
+    def remove_section(self, section):
+        ''' remove an element
+        
+        updates the accordion width
+
+        section: the Accordion_Element to remove
+        '''
+
+        self.sections.remove(section)
+        section.destroy()
+        self.reorder()
+        self.update_canvas_width()
+
     def reorder(self):
         ''' reorder the accordion
 
@@ -275,8 +316,11 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.title("Modern Accordion Navigation Bar")
 
-    accordion = Accordion(root)
-    accordion.pack(fill='both', expand=True)
+    frame = ttk.Frame(root)
+    frame.grid(row=0, sticky='news')
+    accordion = Accordion(frame)
+    accordion.grid(row=0, column=0, sticky='ns')
+    # accordion.pack(fill='both', expand=True)
 
     # Example elements with multiple levels
     s = accordion.add_section("Section 1", lambda: print("Section 1 clicked"))
@@ -288,5 +332,7 @@ if __name__ == "__main__":
     e = s.add_element("Item 2.1", lambda: print("Item 2.1 clicked"))
     e = s.add_element("Item 2.2", lambda: print("Item 2.2 clicked"))
     e1 = e.add_element("Item 2.2.1", lambda: print("Item 2.2.1 clicked"))
+
+    accordion.reorder()
 
     root.mainloop()
