@@ -25,11 +25,11 @@ class Entry:
 
     def __eq__(self, other):
         '''can be used to compare Entry objects
-        
+
         check is done based on the equality of the properties
 
         other: instance to be checked for equality
-        
+
         returns: True if equal False if not
                   NotImplemented if other is no Entry
         '''
@@ -78,11 +78,11 @@ class Module:
 
     def __eq__(self, other):
         '''can be used to compare Module objects
-        
+
         check is done based on the equality of the properties
 
         other: instance to be checked for equality
-        
+
         returns: True if equal False if not
                   NotImplemented if other is no Entry
         '''
@@ -90,7 +90,6 @@ class Module:
             return NotImplemented
 
         return self.entries == other.entries and self.name == other.name and self.ECTS == other.ECTS and self.start == other.start and self.stop == other.stop and self.plannedEnd == other.plannedEnd
-
 
     def start_module(self, duration):
         '''Starts the module.
@@ -115,7 +114,7 @@ class Module:
 
     def remove_entry(self, entry):
         '''removes an entry
-        
+
         entry: the entry to be removed
         '''
         self.entries.remove(entry)
@@ -132,11 +131,13 @@ class Module:
         for entry in self.entries:
             found = False
             for item in durations:
+                # add duration if category exists already in durations
                 if item['Name'] == entry.category:
                     item['Duration'] = item['Duration'] + entry.get_duration()
                     found = True
                     break
 
+            # create a new item in durations if the category does not exist
             if not found:
                 durations.append({"Name": entry.category,
                               "Duration": entry.get_duration()})
@@ -173,11 +174,11 @@ class Semester:
 
     def __eq__(self, other):
         '''can be used to compare Semester objects
-        
+
         check is done based on the equality of the properties
 
         other: instance to be checked for equality
-        
+
         returns: True if equal False if not
                   NotImplemented if other is no Entry
         '''
@@ -216,10 +217,10 @@ class Semester:
 
     def remove_entry(self, module, entry):
         '''removes an entry
-        
+
         if the module does not hold an entry anymore
         it is also removed
-        
+
         module: the module
         entry: the entry
         '''
@@ -321,9 +322,9 @@ class Study:
 
     def remove_entry(self, semester, module, entry):
         '''removes an entry
-        
+
         if the semester does not hold a module anymore it is deleted
-        
+
         semester: the semester
         module: the module
         entry: the entry
@@ -439,7 +440,17 @@ class TimeTracker:
         self.current_entry = None
 
 class DateTimeFrame(Frame):
+    ''' a user control to combine selection of date and time
+
+    extends Frame
+    '''
+
     def __init__(self, parent, label):
+        ''' constructor of the user control
+
+        parent: the parent frame in which the DateTimeFrame is added
+        label: the label to be displayed next to the controls.
+        '''
         super().__init__(parent)
 
         tk.Label(self, text=label).grid(row=0, column=0, sticky='w')
@@ -454,7 +465,11 @@ class DateTimeFrame(Frame):
         self.minute_entry = ttk.Combobox(self, values=[f"{i:02}" for i in range(60)], width=3)
         self.minute_entry.grid(row=0, column=5, sticky='w')
 
-    def set_datetime(self, datetime:datetime.datetime):
+    def set_datetime(self, datetime):
+        ''' set the value of the user control
+
+        datetime: the datetime object to set
+        '''
         if(datetime is None): #  leave empty
             return
 
@@ -463,6 +478,10 @@ class DateTimeFrame(Frame):
         self.minute_entry.set(datetime.minute)
 
     def get_datetime(self):
+        ''' get the value of the user control as datetime
+
+        returns datetime
+        '''
         date = self.date.get_date()
         h = int(self.hour_entry.get())
         m = int(self.minute_entry.get())
@@ -471,7 +490,16 @@ class DateTimeFrame(Frame):
 SETTINGS_FILE = 'settings.json'
 
 class TimeTrackerGUI:
+    '''The GUI which is shown.
+
+    Handles all necessary events.
+    '''
+
     def __init__(self, root):
+        '''constructor of the UI
+
+        initializes the UI, loads stored data, starts new tracker if needed
+        '''
         self.root = root
         self.root.title("TimeTracker")
         self.root.geometry('900x450')
@@ -505,6 +533,8 @@ class TimeTrackerGUI:
         self.tracker_btn = tk.Button(
             header_view, text="Tracker",
             command=lambda: tracker_view.tkraise()).grid(row=0, column=0)
+
+        # switch the view, generate/ update UI elements from analyse view
         self.analyse_btn = tk.Button(
             header_view, text="Analyse",
             command=lambda: [analyse_view.tkraise(),
@@ -561,6 +591,7 @@ class TimeTrackerGUI:
         self.current_duration_label.grid(
             row=1, column=2, columnspan=3, sticky="W")
 
+        # treeview to show the entries in a table
         self.treeview_frame = Frame(tracker_view)
 
         self.tree = ttk.Treeview(self.treeview_frame, columns=(
@@ -612,7 +643,7 @@ class TimeTrackerGUI:
 
     def initial_load(self):
         '''load the initial data
-        
+
         load data and update gui elements
         '''
         self.load_data()
@@ -659,14 +690,21 @@ class TimeTrackerGUI:
         filename = tk.filedialog.asksaveasfilename(filetypes =data, defaultextension=data)
         self.save_data(filename)
 
-
     def print_chart(self, scope):
+        '''prints the chart
+
+        generates the data depending on the scope, creates the chart defined
+        by the active chart type and plots it
+
+        scope: the data (study, Semester, Module) which will be printed
+        '''
         # prevent memory leak because matplotlib figure remains open
         # TODO: write to Testprotocol
         # TODO: Burndown check for instance of scope
         if self.chart:
             self.chart.destroy()
 
+        # create data depending on the chart type
         if self.active_chart == ChartType.BURNDOWN:
             stopTimes = []
             values = []
@@ -695,14 +733,17 @@ class TimeTrackerGUI:
                         values.append(mod.ECTS)
             elif isinstance(scope,Module):
                 pass
-            
+
+            # get the latest planned end
             end.sort(reverse=True)
             planned_end = end[0]
 
+            # get the first start of a module
             start.sort()
             stopTimes.append(start[0])
             values.append(0)
 
+            # sort the values
             sortedList = sorted(zip(stopTimes,values))
             a = [x for x,_ in sortedList]
             b = [x for _,x in sortedList]
@@ -715,34 +756,38 @@ class TimeTrackerGUI:
         self.chart.plot(self.plot_frame)
 
     def set_active_chart(self, chart_type):
+        '''sets the active chart type and prints the chart
+
+        chart_type: the chart type to set
+        '''
         self.active_chart = chart_type
         self.print_chart(self.chart_scope)
 
     def generate_accordion(self, parent):
         '''generate an accordion
-        
+
         generates an accordion depending on the data of the tracker
-        
+
         parent: the frame where the accordion is placed
         '''
         # create a new accordion if none exists
         if self.accordion is None:
-            self.accordion=Accordion(parent)
+            self.accordion = Accordion(parent)
             self.accordion.grid(row=0, column=0, sticky='ns')
 
         # remove deleted entries
         semesterNames = [sem.name for sem in self.tracker.study.semesters]
         for sec in self.accordion.sections:
             if sec.name not in semesterNames:
-                #delete the section
+                # delete the section
                 self.accordion.remove_section(sec)
                 continue
-            
+
             sem = self.tracker.study.get_semester(sec.name)
             moduleNames = [mod.name for mod in sem.modules]
             for entry in sec.sub_elements:
                 if entry.name not in moduleNames:
-                    #delete the entry
+                    # delete the entry
                     sec.remove_element(entry)
                     continue
 
@@ -770,9 +815,13 @@ class TimeTrackerGUI:
                     # add all modules because whole section was added
                     section.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
         self.accordion.reorder()
-                
-                    
+
     def update_label(self):
+        '''update the current duration label
+
+        is called every second
+        '''
+        # if tracking is running
         if self.is_tracking:
             duration = str(self.tracker.current_entry.get_duration()
                         ).split('.')[0]  # remove micros
@@ -781,13 +830,19 @@ class TimeTrackerGUI:
             self.current_duration_label.configure(
                 text=f"Tracking: {cat} in module {mod} for {duration}")
 
+            # call this method after one second
             self.root.after(1000, self.update_label)
 
     def combo_update(self, index, value, op):
         self.update_treeview()
 
     def tree_click(self, event):
-        # todo implement editing
+        '''click event of the treeview
+
+        calls a new window to editor remove the clicked entry or create a
+        new entry
+        '''
+        # deserialize the data
         selected = self.tree.focus()
         item = self.tree.item(selected)
         tags = item['tags']
@@ -802,8 +857,7 @@ class TimeTrackerGUI:
         entry_pickle = base64.b64decode(entry_base64)
         entry = pickle.loads(entry_pickle)
 
-        # TODO: call a new window for editing
-        # if edit -> delete curr entry and create new entry
+        # new window
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Edit entry")
 
@@ -848,17 +902,37 @@ class TimeTrackerGUI:
         remove_btn.grid(row=4, column = 2, sticky='news')
 
     def remove(self, sem, mod, entry):
+        '''remove an entry
+
+        sem: the semester
+        mod: the module
+        entry: the entry
+        '''
         self.tracker.study.remove_entry(sem, mod, entry)
         self.update_treeview()
         print("removed entry")
 
     def edit(self, sem, mod, entry):
+        ''' edit an entry
+
+        the entry is deleted and a new one is created
+
+        sem: the semester
+        mod: the module
+        entry: the entry
+        '''
         self.remove(sem, mod, entry)
         s,m,e = self.add_new_entry()
         if mod.stop !=  None:
             m.stop = self.module_end.get_datetime()
 
     def add_new_entry(self):
+        ''' add a new entry
+
+        the values of the user controls are read
+
+        returns the semester, module and entry
+        '''
         semName = self.sem_var.get()
         modName = self.mod_var.get()
         catName = self.cat_var.get()
@@ -871,6 +945,11 @@ class TimeTrackerGUI:
         return s,m,e
 
     def btn_start_stop_click(self):
+        ''' start or stop the tracking
+
+        If tracking is started the label is updated.
+        Updates the treeview.
+        '''
         if (self.is_tracking):
             # stop tracking
             self.tracker.stop_tracking()
@@ -892,41 +971,42 @@ class TimeTrackerGUI:
         self.update_treeview()
 
     def btn_finish_click(self):
+        ''' finishes the module'''
         sem = self.tracker.study.get_semester(self.semester_var.get())
         mod = sem.get_module(self.module_var.get())
         mod.finish_module()
 
     def update_combo_semesters(self):
+        '''updates the values of the semester combobox'''
         semesters = [s.name for s in self.tracker.study.semesters]
         self.semester_combobox['values'] = semesters
 
     def update_combo_modules(self):
+        '''
+        updates the values of the modules combobox depending on the semesters combobox
+        '''
         sem_name = self.semester_var.get()
         self.module_combobox['values'] = self.tracker.study.get_modules(
             semName=sem_name)
-        """
-        if sem_name:
-            sem_lst = [self.tracker.study.get_semester(sem_name)]
-        else:
-            sem_lst = self.tracker.study.semesters
-        for sem in sem_lst:
-            modules = [m.name for m in sem.modules]
-        self.module_combobox['values'] = modules
-        """
 
     def update_combo_categories(self):
+        '''
+        updates the values ot the categories combobox depending on the semester and module comboboxes
+        '''
         sem_name = self.semester_var.get()
         mod_name = self.module_var.get()
         self.category_combobox['values'] = self.tracker.study.get_categories(
             semName=sem_name, modName=mod_name)
-        """
-        sem = self.tracker.study.get_semester(self.semester_var.get())
-        mod = sem.get_module(self.module_var.get())
-        categories = mod.get_categories()
-        self.category_combobox['values'] = list(categories)
-        """
 
     def update_treeview(self):
+        '''updates the treeview
+
+        deletes all existing items and generates new items depending on the
+        selected  semester, module and category
+
+        serializes the data for the click event
+        '''
+
         # clean all existing entries
         for item in self.tree.get_children():
             self.tree.delete(item)
@@ -960,6 +1040,14 @@ class TimeTrackerGUI:
 
 
     def save_data(self, filename= None):  # TODO: save in correct format
+        '''saves the data
+
+        Saves the timetracker to the specified file.
+        If no file is specified the last used file is used
+        If a file is specified it is saved as last used file
+
+        filename: the file where to save the timetracker
+        '''
         if filename is None:
             filename = "time_tracking_data.json"
         with open(filename, "wb") as file:
@@ -968,6 +1056,15 @@ class TimeTrackerGUI:
         self.save_settings(self.settings)
 
     def load_data(self, filename=None):
+        '''Loads a previous saved timetracker.
+
+        Loads the tracker specified by filename.
+        If no filename is specified the last used file is used.
+        If there is no last used file of a previous started session a new tracker
+        is started.
+
+        filename: the Filename
+        '''
         # no filename given search settings file
         if filename is None:
             self.settings = self.load_settings()
@@ -991,10 +1088,12 @@ class TimeTrackerGUI:
             messagebox.showerror("Error", f"Error while loading data: {e}")
 
     def save_settings(self, settings):
-        with open(SETTINGS_FILE,'w') as file:
-            json.dump(settings,file)
+        '''saves the settings (last used file) to the SETTINGS_FILE path'''
+        with open(SETTINGS_FILE, 'w') as file:
+            json.dump(settings, file)
 
     def load_settings(self):
+        '''loads the settings (last used file) from thee SETTINGS_FILE path'''
         try:
             with open(SETTINGS_FILE, 'r') as file:
                 return json.load(file)
@@ -1002,6 +1101,10 @@ class TimeTrackerGUI:
             return {}
 
     def on_close(self):
+        '''callback function for application shutdown
+
+        saves the data to the last used filename
+        '''
         filename = self.settings.get('last_used_file')
         self.save_data(filename)
         self.root.destroy()
