@@ -450,10 +450,14 @@ class UnitTestStudy(unittest.TestCase):
         with self.assertRaises(TypeError):
             TimeTracker.Study(hoursPerECTS=30)
 
+        with self.assertRaises(TypeError):
+            TimeTracker.Study(plannedEnd=datetime.datetime.now())
+
     def test_add_semester(self):
         '''tests if adding semesters works'''
 
-        study = TimeTracker.Study(ECTS=180, hoursPerECTS=30)
+        study = TimeTracker.Study(
+            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -475,7 +479,8 @@ class UnitTestStudy(unittest.TestCase):
     def test_add_entry(self):
         '''tests if adding an entry works'''
 
-        study = TimeTracker.Study(ECTS=180, hoursPerECTS=30)
+        study = TimeTracker.Study(
+            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -512,7 +517,8 @@ class UnitTestStudy(unittest.TestCase):
     def test_remove_entry(self):
         '''tests if removing an entry works'''
 
-        study = TimeTracker.Study(ECTS=180, hoursPerECTS=30)
+        study = TimeTracker.Study(
+            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -549,7 +555,8 @@ class UnitTestStudy(unittest.TestCase):
     def test_get_durations(self):
         '''test if correct semester durations are returned'''
 
-        study = TimeTracker.Study(ECTS=180, hoursPerECTS=30)
+        study = TimeTracker.Study(
+            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
         data_semesters = ["sem1", "sem2"]
         data_modules = ["mod1", "mod2"]
         data_categories = ["a", "b", "c", "d", "e", "f"]
@@ -588,7 +595,8 @@ class UnitTestStudy(unittest.TestCase):
     def test_get_semester(self):
         '''test if a semester can be searched by name'''
 
-        study = TimeTracker.Study(ECTS=180, hoursPerECTS=30)
+        study = TimeTracker.Study(
+            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         with self.assertRaises(TypeError):
             study.get_semester()
@@ -611,7 +619,7 @@ class UnitTestStudy(unittest.TestCase):
 
     def test_get_modules(self):
         '''test if all used modules are returned'''
-        study = TimeTracker.Study(180, 30)
+        study = TimeTracker.Study(180, 30, datetime.datetime.now())
 
         # generate data
         sem_data = ["sem1", "sem11", "sem2"]
@@ -636,7 +644,7 @@ class UnitTestStudy(unittest.TestCase):
 
     def test_get_categories(self):
         '''test if all used modules are returned'''
-        study = TimeTracker.Study(180, 30)
+        study = TimeTracker.Study(180, 30, datetime.datetime.now())
 
         # generate data
         sem_data = ["sem1", "sem11", "sem2"]
@@ -688,10 +696,14 @@ class TimeTrackerUnitTest(unittest.TestCase):
             tracker = TimeTracker.TimeTracker(ECTS=180)
         with self.assertRaises(TypeError):
             tracker = TimeTracker.TimeTracker(hoursPerECTS=30)
+        with self.assertRaises(TypeError):
+            tracker = TimeTracker.TimeTracker(
+                plannedEnd=datetime.datetime.now())
 
     def test_start_tracking(self):
         '''test the start tracking function'''
-        timeTracker = TimeTracker.TimeTracker(ECTS=180, hoursPerECTS=30)
+        timeTracker = TimeTracker.TimeTracker(
+            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -719,7 +731,8 @@ class TimeTrackerUnitTest(unittest.TestCase):
 
     def test_stop_tracking(self):
         '''test stopping the tracking'''
-        timeTracker = TimeTracker.TimeTracker(ECTS=180, hoursPerECTS=30)
+        timeTracker = TimeTracker.TimeTracker(
+            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # stop not running tracking
         with self.assertRaises(RuntimeError):

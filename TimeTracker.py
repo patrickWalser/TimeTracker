@@ -279,15 +279,17 @@ class Study:
     Holds a list of semesters
     '''
 
-    def __init__(self, ECTS, hoursPerECTS):
+    def __init__(self, ECTS, hoursPerECTS, plannedEnd):
         '''creates a study
 
         ECTS: amount of ECTS in the study
         hoursPerECTS: value how many work hours are necessary for each ECTS
+        plannedEnd: the planned end of the study
         '''
         self.semesters = []
         self.ECTS = ECTS
         self.hoursPerECTS = hoursPerECTS
+        self.plannedEnd = plannedEnd
 
     def add_semester(self, semester):
         '''adds a semester to the list
@@ -402,13 +404,13 @@ class TimeTracker:
     Holds the lastEntry.
     '''
 
-    def __init__(self, ECTS, hoursPerECTS):
+    def __init__(self, ECTS, hoursPerECTS, plannedEnd):
         '''creates a TimeTracker
 
         ECTS: number of total ECTS of the Study
         hoursPerECTS: defined number of hours used per ECTS (e.g. 30H/ECTS)
         '''
-        self.study = Study(ECTS, hoursPerECTS)
+        self.study = Study(ECTS, hoursPerECTS, plannedEnd)
         self.current_entry = None
         self.last_entry = None
 
@@ -514,9 +516,10 @@ class TimeTrackerGUI:
         root.config(menu=menu)
         filemenu = Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New", command=lambda: self.new_tracker())
+        filemenu.add_command(label="New", command=lambda: self.new_tracker(edit=False))
         filemenu.add_command(label="Open", command=lambda: self.open_tracker())
         filemenu.add_command(label="Save as", command=lambda: self.save_as())
+        filemenu.add_command(label="Edit", command=lambda: self.new_tracker(edit=True))
 
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
@@ -665,10 +668,12 @@ class TimeTrackerGUI:
         self.chart_scope = self.tracker.study
 
 # Commands for the filemenu
-    def new_tracker(self):
-        '''opens a window to create a new tracker'''
+    def new_tracker(self, edit):
+        '''opens a window to create a new tracker
+        
+        edit: if the existing tracker should be edited
+        '''
         # set name, planned end, num ECTS, hoursPerEcts
-        # TODO: plannedEnd ?
         # TODO: save the old tracker?
         new_window = tk.Toplevel(self.root)
         new_window.title("New Tracker")
@@ -677,20 +682,47 @@ class TimeTrackerGUI:
         new_window.transient(self.root)
 
         tk.Label(new_window, text="Total Amount of ECTS").grid(row=0, column=0)
-        self.ECTS_entry = tk.Entry(new_window).grid(row=0, column=1)
+        self.ECTS_var = tk.StringVar()
+        ECTS_entry = tk.Entry(new_window, textvariable=self.ECTS_var).grid(row=0, column=1)
 
         tk.Label(new_window, text="Hours per ECTS").grid(row=1, column=0)
-        self.hoursPerECTS_entry = tk.Entry(new_window).grid(row=1, column=1)
+        self.hoursPerECTS_var = tk.StringVar()
+        hoursPerECTS_entry = tk.Entry(new_window, textvariable=self.hoursPerECTS_var).grid(row=1, column=1)
+
+        self.plannedEnd = DateTimeFrame(new_window, "Planned end")
+        self.plannedEnd.grid(row=2, column=0)
+
+        if edit:
+            self.ECTS_var.set(self.tracker.study.ECTS)
+            self.hoursPerECTS_var.set(self.tracker.study.hoursPerECTS)
+            self.plannedEnd.set_datetime(self.tracker.study.plannedEnd)
+            save_cmd = self.save_tracker
+        else:
+            save_cmd = self.save_new_tracker
 
         self.btn_new_tracker_save = tk.Button(
-            new_window, text='save', command=lambda window=new_window: self.save_new_tracker(window)).grid(row=3, column=0)
-        self.btn_new_tracker_abort = tk.Button(
-            new_window, text='abort', command=lambda: print("abort"))
+            new_window, text='save', command=lambda window=new_window: save_cmd(window)).grid(row=3, column=0)
+        # TODO: remove that button
 
 #TODO: call save_as after creating the tracker?
     def save_new_tracker(self, window):
         '''create the tracker and save it'''
-        self.tracker = TimeTracker(self.ECTS_entry, self.hoursPerECTS_entry)
+        self.tracker = TimeTracker(self.ECTS_var.get(), self.hoursPerECTS_var.get(),
+                                   self.plannedEnd.get_datetime())
+        self.chart_scope = self.tracker.study
+        window.destroy()
+    
+    def save_tracker(self, window):
+        '''save an edited tracker
+        
+        destroys the window
+
+        window: the window which is displayed
+        '''
+        self.tracker.study.ECTS = int(self.ECTS_var.get())
+        self.tracker.study.hoursPerECTS = int(self.hoursPerECTS_var.get())
+        self.tracker.study.plannedEnd = self.plannedEnd.get_datetime()
+
         self.chart_scope = self.tracker.study
         window.destroy()
 
@@ -1025,6 +1057,7 @@ class TimeTrackerGUI:
                         if mod.stop != None:
                             stopTimes.append(mod.stop)
                             values.append(mod.ECTS)
+                end.append(scope.plannedEnd)
             elif isinstance(scope, Semester):
                 # Only Modules which are already tracked are respected in the
                 # diagram
