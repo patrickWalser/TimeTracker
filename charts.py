@@ -32,7 +32,7 @@ class Chart(ABC):
 
         canvas = FigureCanvasTkAgg(fig, master=frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        canvas.get_tk_widget().pack(fill=tk.NONE, expand=True)
         self.figure = fig
         self.frame = frame
 
@@ -124,11 +124,18 @@ class PieChart(Chart):
         frame: the frame where the figure should be shown
         '''
         fig, ax = plt.subplots(figsize=(5, 5))
-        ax.pie(self.rel_sizes, labels=self.labels,
-               autopct='%1.1f%%', startangle=140)
+        wedges, _, _ = ax.pie(self.rel_sizes,
+                              autopct='%1.1f%%', startangle=0)
         ax.set_title('Pie Chart')
         # Equal aspect ratio ensures that pie is drawn as a circle.
         ax.axis('equal')
+
+        # Create legend with percentage
+        labels_with_pct = [f'{label} - {size:.1f}%' for label,
+                           size in zip(self.labels, self.rel_sizes)]
+
+        ax.legend(wedges, labels_with_pct, loc="lower left",
+                  bbox_to_anchor=(-0.15, -0.15, 0, 0))
 
         self.create_canvas(fig, frame)
 
