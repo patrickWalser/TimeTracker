@@ -2,6 +2,7 @@ import datetime
 import numpy as np
 import tkinter as tk
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -72,8 +73,14 @@ class BurndownChart(Chart):
             remaining -= ects
             self.remaining_work.append(remaining)
 
-        self.plan_x = [date_lst[0], planned_end]
-        self.plan_y = [total_work, 0]
+        total_days = (planned_end - date_lst[0]).days
+        self.plan_x = [
+            date_lst[0] + datetime.timedelta(days=i) for i in range(total_days + 1)]
+        self.plan_y = [
+            total_work - (total_work / total_days) * i for i in range(total_days + 1)]
+
+        # calculate interval for 10 ticks
+        self.interval = int(total_days / 10)
 
     def plot(self, frame):
         ''' plots a burndown chart
@@ -86,11 +93,18 @@ class BurndownChart(Chart):
                 marker='o', linestyle='-', color='b')
         # plot target line
         ax.plot(self.plan_x, self.plan_y, linestyle='--', color='g')
+
+        # ticks for interval daysand year-month format
+        ax.xaxis.set_major_locator(mdates.DayLocator(interval=self.interval))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+
+        # rotate the x-axis labels to prevent overlapping
+        fig.autofmt_xdate()
+
         ax.set_title('Burndown Chart')
         ax.set_xlabel('Date')
         ax.set_ylabel('Remaining Work')
         ax.grid(True)
-
 
         self.create_canvas(fig, frame)
 
@@ -166,11 +180,11 @@ if __name__ == "__main__":
 
     # Burndown-Chart data
     dates = [datetime.date(2024, 6, i) for i in range(1, 11)]
-    remaining_work = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+    remaining_work = [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]
 
     # create and plot Burndown-Chart
     burndown_chart = ChartFactory.create_chart(
-        ChartType.BURNDOWN, dates, remaining_work)
+        ChartType.BURNDOWN, dates, remaining_work, 100, dates[len(dates)-1])
     burndown_chart.plot(frame1)
 
     # Pie-Chart frame
