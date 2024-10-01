@@ -140,7 +140,7 @@ class Module:
             # create a new item in durations if the category does not exist
             if not found:
                 durations.append({"Name": entry.category,
-                              "Duration": entry.get_duration()})
+                                  "Duration": entry.get_duration()})
             sum += entry.get_duration()
         return durations, sum
 
@@ -184,10 +184,10 @@ class Semester:
         '''
         if not isinstance(other, Module):
             return NotImplemented
-        
+
         return self.modules == other.modules and self.ECTS == other.ECTS and self.name == other.name
-    
-    def add_module(self, module: Module):
+
+    def add_module(self, module):
         '''adds a Module to the list
 
         module: the module to add
@@ -289,7 +289,7 @@ class Study:
         self.ECTS = ECTS
         self.hoursPerECTS = hoursPerECTS
 
-    def add_semester(self, semester: Semester):
+    def add_semester(self, semester):
         '''adds a semester to the list
 
         semester: the semester to add
@@ -459,10 +459,12 @@ class DateTimeFrame(Frame):
         self.date.grid(row=0, column=2)
 
         tk.Label(self, text="Time:").grid(row=0, column=3, sticky='w')
-        self.hour_entry = ttk.Combobox(self, values=[f"{i:02}" for i in range(24)], width=3)
+        self.hour_entry = ttk.Combobox(
+            self, values=[f"{i:02}" for i in range(24)], width=3)
         self.hour_entry.grid(row=0, column=4, sticky='w')
-        
-        self.minute_entry = ttk.Combobox(self, values=[f"{i:02}" for i in range(60)], width=3)
+
+        self.minute_entry = ttk.Combobox(
+            self, values=[f"{i:02}" for i in range(60)], width=3)
         self.minute_entry.grid(row=0, column=5, sticky='w')
 
     def set_datetime(self, datetime):
@@ -470,7 +472,7 @@ class DateTimeFrame(Frame):
 
         datetime: the datetime object to set
         '''
-        if(datetime is None): #  leave empty
+        if (datetime is None):  # leave empty
             return
 
         self.date.set_date(datetime)
@@ -485,7 +487,8 @@ class DateTimeFrame(Frame):
         date = self.date.get_date()
         h = int(self.hour_entry.get())
         m = int(self.minute_entry.get())
-        return datetime.datetime(year=date.year, month=date.month, day=date.day, hour=h,minute=m)
+        return datetime.datetime(year=date.year, month=date.month, day=date.day, hour=h, minute=m)
+
 
 SETTINGS_FILE = 'settings.json'
 
@@ -508,17 +511,18 @@ class TimeTrackerGUI:
 
         # file menu for opening, saving, etc.
         menu = Menu(root)
-        root.config(menu= menu)
+        root.config(menu=menu)
         filemenu = Menu(menu)
-        menu.add_cascade(label="File", menu= filemenu)
-        filemenu.add_command(label="New", command=lambda:self.new_tracker())
-        filemenu.add_command(label="Open", command=lambda:self.open_tracker())
-        filemenu.add_command(label="Save as", command=lambda:self.save_as())
+        menu.add_cascade(label="File", menu=filemenu)
+        filemenu.add_command(label="New", command=lambda: self.new_tracker())
+        filemenu.add_command(label="Open", command=lambda: self.open_tracker())
+        filemenu.add_command(label="Save as", command=lambda: self.save_as())
 
-        helpmenu= Menu(menu)
-        menu.add_cascade(label="Help", menu= helpmenu)
-        helpmenu.add_command(label="About", command=lambda:print("about clicked"))
-        
+        helpmenu = Menu(menu)
+        menu.add_cascade(label="Help", menu=helpmenu)
+        helpmenu.add_command(
+            label="About", command=lambda: print("about clicked"))
+
         # separate window into frames using grid
         header_view = Frame(root)
         header_view.grid(row=0, column=0, sticky='news', padx=20, pady=10)
@@ -546,7 +550,8 @@ class TimeTrackerGUI:
         self.semester_label = tk.Label(
             tracker_view, text="Semester: ").grid(row=0, column=0)
         self.semester_var = tk.StringVar()
-        self.semester_var.trace_add('write', lambda a,b,c: self.update_treeview())
+        self.semester_var.trace_add(
+            'write', lambda a, b, c: self.update_treeview())
         self.semester_combobox = ttk.Combobox(
             tracker_view, textvariable=self.semester_var,
             postcommand=self.update_combo_semesters)
@@ -555,7 +560,8 @@ class TimeTrackerGUI:
         self.module_label = tk.Label(
             tracker_view, text="Module: ").grid(row=0, column=2)
         self.module_var = tk.StringVar()
-        self.module_var.trace_add('write', lambda a,b,c: self.update_treeview())
+        self.module_var.trace_add(
+            'write', lambda a, b, c: self.update_treeview())
         self.module_combobox = ttk.Combobox(
             tracker_view, textvariable=self.module_var,
             postcommand=self.update_combo_modules)
@@ -564,7 +570,8 @@ class TimeTrackerGUI:
         self.category_label = tk.Label(
             tracker_view, text="Category: ").grid(row=0, column=4)
         self.category_var = tk.StringVar()
-        self.category_var.trace_add('write', lambda a,b,c: self.update_treeview())
+        self.category_var.trace_add(
+            'write', lambda a, b, c: self.update_treeview())
         self.category_combobox = ttk.Combobox(
             tracker_view, textvariable=self.category_var,
             postcommand=self.update_combo_categories)
@@ -629,16 +636,20 @@ class TimeTrackerGUI:
         self.active_chart = ChartType.PIE
         chart_frame_header = tk.Frame(self.chart_frame)
         chart_frame_header.grid(row=0, sticky='nw')
-        btn_burndown = tk.Button(chart_frame_header,text="Burndown-Chart", command=lambda: self.set_active_chart(ChartType.BURNDOWN))
+        btn_burndown = tk.Button(chart_frame_header, text="Burndown-Chart",
+                                 command=lambda: self.set_active_chart(ChartType.BURNDOWN))
         btn_burndown.grid(row=0, column=0, sticky='nw')
-        btn_pie = tk.Button(chart_frame_header, text="Pie-Chart", command=lambda: self.set_active_chart(ChartType.PIE))
+        btn_pie = tk.Button(chart_frame_header, text="Pie-Chart",
+                            command=lambda: self.set_active_chart(ChartType.PIE))
         btn_pie.grid(row=0, column=1, sticky='nw')
 
         self.plot_frame = tk.Frame(self.chart_frame)
-        self.plot_frame.grid(row=1, sticky = 'news')
+        self.plot_frame.grid(row=1, sticky='news')
+        # self.plot_frame.rowconfigure(1,weight=1)
+        # self.plot_frame.columnconfigure(0, weight=1)
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.root.after(0,self.initial_load)
+        self.root.after(0, self.initial_load)
 
         # TODO: updatechart  Scope when different tracker is loaded
         #self.chart_scope = self.tracker.study
@@ -665,14 +676,16 @@ class TimeTrackerGUI:
         new_window.grab_set()
         new_window.transient(self.root)
 
-        tk.Label(new_window,text="Total Amount of ECTS").grid(row=0, column=0)
+        tk.Label(new_window, text="Total Amount of ECTS").grid(row=0, column=0)
         self.ECTS_entry = tk.Entry(new_window).grid(row=0, column=1)
 
-        tk.Label(new_window,text="Hours per ECTS").grid(row=1, column=0)
+        tk.Label(new_window, text="Hours per ECTS").grid(row=1, column=0)
         self.hoursPerECTS_entry = tk.Entry(new_window).grid(row=1, column=1)
 
-        self.btn_new_tracker_save = tk.Button(new_window,text='save', command=lambda window = new_window:self.save_new_tracker(window)).grid(row=3, column = 0)
-        self.btn_new_tracker_abort = tk.Button(new_window,text='abort', command = lambda:print("abort"))
+        self.btn_new_tracker_save = tk.Button(
+            new_window, text='save', command=lambda window=new_window: self.save_new_tracker(window)).grid(row=3, column=0)
+        self.btn_new_tracker_abort = tk.Button(
+            new_window, text='abort', command=lambda: print("abort"))
 
 #TODO: call save_as after creating the tracker?
     def save_new_tracker(self, window):
@@ -683,14 +696,16 @@ class TimeTrackerGUI:
 
     def open_tracker(self):
         '''open a previously saved tracker from the filesystem'''
-        data = [('json','*.json')]
-        filename = tk.filedialog.askopenfilename(filetypes=data, defaultextension=data)
+        data = [('json', '*.json')]
+        filename = tk.filedialog.askopenfilename(
+            filetypes=data, defaultextension=data)
         self.load_data(filename)
 
     def save_as(self):
         '''save the current tracker to the filesystem'''
-        data = [('json','*.json')]
-        filename = tk.filedialog.asksaveasfilename(filetypes =data, defaultextension=data)
+        data = [('json', '*.json')]
+        filename = tk.filedialog.asksaveasfilename(
+            filetypes=data, defaultextension=data)
         self.save_data(filename)
 
     def print_chart(self, scope):
@@ -715,7 +730,7 @@ class TimeTrackerGUI:
             total_work = 0
             planned_end = 0
             end = []
-            if isinstance(scope,Study):
+            if isinstance(scope, Study):
                 total_work = scope.ECTS
                 for sem in scope.semesters:
                     for mod in sem.modules:
@@ -724,7 +739,7 @@ class TimeTrackerGUI:
                         if mod.stop != None:
                             stopTimes.append(mod.stop)
                             values.append(mod.ECTS)
-            elif isinstance(scope,Semester):
+            elif isinstance(scope, Semester):
                 # Only Modules which are already tracked are respected in the
                 # diagram
                 for mod in scope.modules:
@@ -734,12 +749,12 @@ class TimeTrackerGUI:
                     if mod.stop != None:
                         stopTimes.append(mod.stop)
                         values.append(mod.ECTS)
-            elif isinstance(scope,Module):
+            elif isinstance(scope, Module):
                 pass
 
             # get the latest planned end
             end.sort(reverse=True)
-            planned_end = end[0]
+            planned_end = end[0].strftime('%Y.%m')
 
             # get the first start of a module
             start.sort()
@@ -747,15 +762,17 @@ class TimeTrackerGUI:
             values.append(0)
 
             # sort the values
-            sortedList = sorted(zip(stopTimes,values))
-            a = [x for x,_ in sortedList]
-            b = [x for _,x in sortedList]
-            self.chart = ChartFactory.create_chart(self.active_chart, a, b, total_work, planned_end)
+            sortedList = sorted(zip(stopTimes, values))
+            a = [x.strftime('%Y.%m') for x, _ in sortedList]
+            b = [x for _, x in sortedList]
+            self.chart = ChartFactory.create_chart(
+                self.active_chart, a, b, total_work, planned_end)
         else:
-            durations,_ = scope.get_durations()
+            durations, _ = scope.get_durations()
             names = [dur.get('Name')for dur in durations]
             values = [dur.get('Duration').total_seconds() for dur in durations]
-            self.chart = ChartFactory.create_chart(self.active_chart, names, values)
+            self.chart = ChartFactory.create_chart(
+                self.active_chart, names, values)
         self.chart.plot(self.plot_frame)
 
     def set_active_chart(self, chart_type):
@@ -809,14 +826,16 @@ class TimeTrackerGUI:
                                 foundMod = True
                                 break
                         if not foundMod:
-                            sec.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
+                            sec.add_element(
+                                mod.name, lambda mod=mod: self.print_chart(mod))
                     break
             if not foundSem:
                 section = self.accordion.add_section(
                     sem.name, lambda sem=sem: self.print_chart(sem))
                 for mod in sem.modules:
                     # add all modules because whole section was added
-                    section.add_element(mod.name, lambda mod=mod: self.print_chart(mod))
+                    section.add_element(
+                        mod.name, lambda mod=mod: self.print_chart(mod))
         self.accordion.reorder()
 
     def update_label(self):
@@ -827,7 +846,7 @@ class TimeTrackerGUI:
         # if tracking is running
         if self.is_tracking:
             duration = str(self.tracker.current_entry.get_duration()
-                        ).split('.')[0]  # remove micros
+                           ).split('.')[0]  # remove micros
             cat = self.tracker.current_entry.category
             mod = self.tracker.current_module.name
             self.current_duration_label.configure(
@@ -861,19 +880,19 @@ class TimeTrackerGUI:
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Edit entry")
 
-        self.sem_var =tk.StringVar()
+        self.sem_var = tk.StringVar()
         sem_entry = tk.Entry(edit_window, textvariable=self.sem_var)
-        sem_entry.grid(row=0, column= 0)
+        sem_entry.grid(row=0, column=0)
         self.sem_var.set(sem.name)
-        
-        self.mod_var =tk.StringVar()
+
+        self.mod_var = tk.StringVar()
         mod_entry = tk.Entry(edit_window, textvariable=self.mod_var)
         mod_entry.grid(row=0, column=1)
         self.mod_var.set(mod.name)
 
         self.cat_var = tk.StringVar()
         cat_entry = tk.Entry(edit_window, textvariable=self.cat_var)
-        cat_entry.grid(row=0, column = 2)
+        cat_entry.grid(row=0, column=2)
         self.cat_var.set(entry.category)
 
         self.comment_var = tk.StringVar()
@@ -885,12 +904,12 @@ class TimeTrackerGUI:
         self.start_time.grid(row=1, columnspan=4, sticky='w')
         self.start_time.set_datetime(entry.start_time)
 
-        self.stop_time = DateTimeFrame(edit_window, label = "stop time:")
+        self.stop_time = DateTimeFrame(edit_window, label="stop time:")
         self.stop_time.grid(row=2, columnspan=4, sticky='w')
         self.stop_time.set_datetime(entry.stop_time)
 
         if mod.stop != None:
-            self.module_end = DateTimeFrame(edit_window, label = "Module end:")
+            self.module_end = DateTimeFrame(edit_window, label="Module end:")
             self.module_end.grid(row=3, columnspan=4, sticky='w')
             self.module_end.set_datetime(mod.stop)
 
@@ -924,8 +943,8 @@ class TimeTrackerGUI:
         entry: the entry
         '''
         self.remove(sem, mod, entry)
-        s,m,e = self.add_new_entry()
-        if mod.stop !=  None:
+        s, m, e = self.add_new_entry()
+        if mod.stop != None:
             m.stop = self.module_end.get_datetime()
 
     def add_new_entry(self):
@@ -939,7 +958,8 @@ class TimeTrackerGUI:
         modName = self.mod_var.get()
         catName = self.cat_var.get()
         comment = self.comment_var.get()
-        s,m,e = self.tracker.study.add_entry(semName, modName, catName, comment)
+        s, m, e = self.tracker.study.add_entry(
+            semName, modName, catName, comment)
         e.start_time = self.start_time.get_datetime()
         e.stop_time = self.stop_time.get_datetime()
         self.update_treeview()
@@ -1027,20 +1047,22 @@ class TimeTrackerGUI:
                                     "%Y-%m-%d %H:%M:%S")
                                 duration = str(entry.get_duration()).split('.')[
                                     0]  # remove micros
-                                sem_obj= pickle.dumps(sem)
-                                sem_base64 = base64.b64encode(sem_obj).decode('utf-8')
+                                sem_obj = pickle.dumps(sem)
+                                sem_base64 = base64.b64encode(
+                                    sem_obj).decode('utf-8')
                                 mod_obj = pickle.dumps(mod)
-                                mod_base64 = base64.b64encode(mod_obj).decode('utf-8')
+                                mod_base64 = base64.b64encode(
+                                    mod_obj).decode('utf-8')
                                 entry_obj = pickle.dumps(entry)
-                                entry_base64 = base64.b64encode(entry_obj).decode('utf-8')
+                                entry_base64 = base64.b64encode(
+                                    entry_obj).decode('utf-8')
                                 self.tree.insert(
                                     "", "end", text=sem.name,
                                     values=(mod.name, entry.category,
                                             entry.comment, start_time,
                                             duration), tags=(sem_base64, mod_base64, entry_base64,))
 
-
-    def save_data(self, filename= None):  # TODO: save in correct format
+    def save_data(self, filename=None):  # TODO: save in correct format
         '''saves the data
 
         Saves the timetracker to the specified file.
@@ -1053,7 +1075,7 @@ class TimeTrackerGUI:
             filename = "time_tracking_data.json"
         with open(filename, "wb") as file:
             pickle.dump(self.tracker, file, pickle.HIGHEST_PROTOCOL)
-        self.settings['last_used_file']= filename
+        self.settings['last_used_file'] = filename
         self.save_settings(self.settings)
 
     def load_data(self, filename=None):
@@ -1076,7 +1098,7 @@ class TimeTrackerGUI:
         try:
             with open(filename, "rb") as file:
                 self.tracker = pickle.load(file)
-                if(self.tracker.last_semester):
+                if (self.tracker.last_semester):
                     self.semester_var.set(self.tracker.last_semester.name)
                 self.module_var.set(self.tracker.last_module.name)
                 self.category_var.set(self.tracker.last_entry.category)
