@@ -516,7 +516,7 @@ class TimeTrackerGUI:
         self.semester_label = tk.Label(
             tracker_view, text="Semester: ").grid(row=0, column=0)
         self.semester_var = tk.StringVar()
-        self.semester_var.trace_add('write', self.combo_update)
+        self.semester_var.trace_add('write', lambda a,b,c: self.update_treeview())
         self.semester_combobox = ttk.Combobox(
             tracker_view, textvariable=self.semester_var,
             postcommand=self.update_combo_semesters)
@@ -525,7 +525,7 @@ class TimeTrackerGUI:
         self.module_label = tk.Label(
             tracker_view, text="Module: ").grid(row=0, column=2)
         self.module_var = tk.StringVar()
-        self.module_var.trace_add('write', self.combo_update)
+        self.module_var.trace_add('write', lambda a,b,c: self.update_treeview())
         self.module_combobox = ttk.Combobox(
             tracker_view, textvariable=self.module_var,
             postcommand=self.update_combo_modules)
@@ -534,7 +534,7 @@ class TimeTrackerGUI:
         self.category_label = tk.Label(
             tracker_view, text="Category: ").grid(row=0, column=4)
         self.category_var = tk.StringVar()
-        self.category_var.trace_add('write', self.combo_update)
+        self.category_var.trace_add('write', lambda a,b,c: self.update_treeview())
         self.category_combobox = ttk.Combobox(
             tracker_view, textvariable=self.category_var,
             postcommand=self.update_combo_categories)
