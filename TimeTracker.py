@@ -708,135 +708,36 @@ class TimeTrackerGUI:
             filetypes=data, defaultextension=data)
         self.save_data(filename)
 
-    def print_chart(self, scope):
-        '''prints the chart
+    def btn_start_stop_click(self):
+        ''' start or stop the tracking
 
-        generates the data depending on the scope, creates the chart defined
-        by the active chart type and plots it
-
-        scope: the data (study, Semester, Module) which will be printed
+        If tracking is started the label is updated.
+        Updates the treeview.
         '''
-        # prevent memory leak because matplotlib figure remains open
-        # TODO: write to Testprotocol
-        # TODO: Burndown check for instance of scope
-        if self.chart:
-            self.chart.destroy()
-
-        # create data depending on the chart type
-        if self.active_chart == ChartType.BURNDOWN:
-            stopTimes = []
-            values = []
-            start = []
-            total_work = 0
-            planned_end = 0
-            end = []
-            if isinstance(scope, Study):
-                total_work = scope.ECTS
-                for sem in scope.semesters:
-                    for mod in sem.modules:
-                        start.append(mod.start)
-                        end.append(mod.plannedEnd)
-                        if mod.stop != None:
-                            stopTimes.append(mod.stop)
-                            values.append(mod.ECTS)
-            elif isinstance(scope, Semester):
-                # Only Modules which are already tracked are respected in the
-                # diagram
-                for mod in scope.modules:
-                    start.append(mod.start)
-                    end.append(mod.plannedEnd)
-                    total_work += mod.ECTS
-                    if mod.stop != None:
-                        stopTimes.append(mod.stop)
-                        values.append(mod.ECTS)
-            elif isinstance(scope, Module):
-                pass
-
-            # get the latest planned end
-            end.sort(reverse=True)
-            planned_end = end[0].strftime('%Y.%m')
-
-            # get the first start of a module
-            start.sort()
-            stopTimes.append(start[0])
-            values.append(0)
-
-            # sort the values
-            sortedList = sorted(zip(stopTimes, values))
-            a = [x.strftime('%Y.%m') for x, _ in sortedList]
-            b = [x for _, x in sortedList]
-            self.chart = ChartFactory.create_chart(
-                self.active_chart, a, b, total_work, planned_end)
+        if (self.is_tracking):
+            # stop tracking
+            self.tracker.stop_tracking()
+            self.start_stop_btn.config(text="Start")
+            bgColor = self.root.cget("background")
+            self.current_duration_label.configure(background=bgColor)
+            self.is_tracking = False
         else:
-            durations, _ = scope.get_durations()
-            names = [dur.get('Name')for dur in durations]
-            values = [dur.get('Duration').total_seconds() for dur in durations]
-            self.chart = ChartFactory.create_chart(
-                self.active_chart, names, values)
-        self.chart.plot(self.plot_frame)
+            # start tracking
+            self.tracker.start_tracking(
+                self.semester_var.get(), self.module_var.get(),
+                self.category_var.get(), self.comment_var.get())
+            self.start_stop_btn.config(text="Stop")
+            self.current_duration_label.configure(background='light green')
+            self.is_tracking = True
+            self.update_label()
 
-    def set_active_chart(self, chart_type):
-        '''sets the active chart type and prints the chart
+        self.update_treeview()
 
-        chart_type: the chart type to set
-        '''
-        self.active_chart = chart_type
-        self.print_chart(self.chart_scope)
-
-    def generate_accordion(self, parent):
-        '''generate an accordion
-
-        generates an accordion depending on the data of the tracker
-
-        parent: the frame where the accordion is placed
-        '''
-        # create a new accordion if none exists
-        if self.accordion is None:
-            self.accordion = Accordion(parent)
-            self.accordion.grid(row=0, column=0, sticky='ns')
-
-        # remove deleted entries
-        semesterNames = [sem.name for sem in self.tracker.study.semesters]
-        for sec in self.accordion.sections:
-            if sec.name not in semesterNames:
-                # delete the section
-                self.accordion.remove_section(sec)
-                continue
-
-            sem = self.tracker.study.get_semester(sec.name)
-            moduleNames = [mod.name for mod in sem.modules]
-            for entry in sec.sub_elements:
-                if entry.name not in moduleNames:
-                    # delete the entry
-                    sec.remove_element(entry)
-                    continue
-
-        # add new entries
-        for sem in self.tracker.study.semesters:
-            foundSem = False
-            for sec in self.accordion.sections:
-                if sem.name == sec.name:
-                    # found the semester, check for the modules and continue with next semester
-                    foundSem = True
-                    for mod in sem.modules:
-                        foundMod = False
-                        for entry in sec.sub_elements:
-                            if mod.name == entry.name:
-                                # found the module continue with next module
-                                foundMod = True
-                                break
-                        if not foundMod:
-                            sec.add_element(
-                                mod.name, lambda mod=mod: self.print_chart(mod))
-                    break
-            if not foundSem:
-                section = self.accordion.add_section(
-                    sem.name, lambda sem=sem: self.print_chart(sem))
-                for mod in sem.modules:
-                    # add all modules because whole section was added
-                    section.add_element(
-                        mod.name, lambda mod=mod: self.print_chart(mod))
-        self.accordion.reorder()
+    def btn_finish_click(self):
+        ''' finishes the module'''
+        sem = self.tracker.study.get_semester(self.semester_var.get())
+        mod = sem.get_module(self.module_var.get())
+        mod.finish_module()
 
     def update_label(self):
         '''update the current duration label
@@ -854,6 +755,71 @@ class TimeTrackerGUI:
 
             # call this method after one second
             self.root.after(1000, self.update_label)
+
+    def update_combo_semesters(self):
+        '''updates the values of the semester combobox'''
+        semesters = [s.name for s in self.tracker.study.semesters]
+        self.semester_combobox['values'] = semesters
+
+    def update_combo_modules(self):
+        '''
+        updates the values of the modules combobox depending on the semesters combobox
+        '''
+        sem_name = self.semester_var.get()
+        self.module_combobox['values'] = self.tracker.study.get_modules(
+            semName=sem_name)
+
+    def update_combo_categories(self):
+        '''
+        updates the values ot the categories combobox depending on the semester and module comboboxes
+        '''
+        sem_name = self.semester_var.get()
+        mod_name = self.module_var.get()
+        self.category_combobox['values'] = self.tracker.study.get_categories(
+            semName=sem_name, modName=mod_name)
+
+    def update_treeview(self):
+        '''updates the treeview
+
+        deletes all existing items and generates new items depending on the
+        selected  semester, module and category
+
+        serializes the data for the click event
+        '''
+
+        # clean all existing entries
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        semName = self.semester_var.get()
+        modName = self.module_var.get()
+        catName = self.category_var.get()
+
+        for sem in self.tracker.study.semesters:
+            if semName in sem.name or semName == "":
+                for mod in sem.modules:
+                    if modName in mod.name or modName == "":
+                        for entry in mod.entries:
+                            add = True
+                            if (catName in entry.category or catName == ""):
+                                start_time = entry.start_time.strftime(
+                                    "%Y-%m-%d %H:%M:%S")
+                                duration = str(entry.get_duration()).split('.')[
+                                    0]  # remove micros
+                                sem_obj = pickle.dumps(sem)
+                                sem_base64 = base64.b64encode(
+                                    sem_obj).decode('utf-8')
+                                mod_obj = pickle.dumps(mod)
+                                mod_base64 = base64.b64encode(
+                                    mod_obj).decode('utf-8')
+                                entry_obj = pickle.dumps(entry)
+                                entry_base64 = base64.b64encode(
+                                    entry_obj).decode('utf-8')
+                                self.tree.insert(
+                                    "", "end", text=sem.name,
+                                    values=(mod.name, entry.category,
+                                            entry.comment, start_time,
+                                            duration), tags=(sem_base64, mod_base64, entry_base64,))
 
     def tree_click(self, event):
         '''click event of the treeview
@@ -933,20 +899,6 @@ class TimeTrackerGUI:
         self.tracker.study.remove_entry(sem, mod, entry)
         self.update_treeview()
 
-    def edit(self, sem, mod, entry):
-        ''' edit an entry
-
-        the entry is deleted and a new one is created
-
-        sem: the semester
-        mod: the module
-        entry: the entry
-        '''
-        self.remove(sem, mod, entry)
-        s, m, e = self.add_new_entry()
-        if mod.stop != None:
-            m.stop = self.module_end.get_datetime()
-
     def add_new_entry(self):
         ''' add a new entry
 
@@ -965,102 +917,149 @@ class TimeTrackerGUI:
         self.update_treeview()
         return s, m, e
 
-    def btn_start_stop_click(self):
-        ''' start or stop the tracking
+    def edit(self, sem, mod, entry):
+        ''' edit an entry
 
-        If tracking is started the label is updated.
-        Updates the treeview.
+        the entry is deleted and a new one is created
+
+        sem: the semester
+        mod: the module
+        entry: the entry
         '''
-        if (self.is_tracking):
-            # stop tracking
-            self.tracker.stop_tracking()
-            self.start_stop_btn.config(text="Start")
-            bgColor = self.root.cget("background")
-            self.current_duration_label.configure(background=bgColor)
-            self.is_tracking = False
-        else:
-            # start tracking
-            self.tracker.start_tracking(
-                self.semester_var.get(), self.module_var.get(),
-                self.category_var.get(), self.comment_var.get())
-            # TODO: can comboboxes be blocked because tracking is active?
-            self.start_stop_btn.config(text="Stop")
-            self.current_duration_label.configure(background='light green')
-            self.is_tracking = True
-            self.update_label()
+        self.remove(sem, mod, entry)
+        s, m, e = self.add_new_entry()
+        if mod.stop != None:
+            m.stop = self.module_end.get_datetime()
 
-        self.update_treeview()
+    def generate_accordion(self, parent):
+        '''generate an accordion
 
-    def btn_finish_click(self):
-        ''' finishes the module'''
-        sem = self.tracker.study.get_semester(self.semester_var.get())
-        mod = sem.get_module(self.module_var.get())
-        mod.finish_module()
+        generates an accordion depending on the data of the tracker
 
-    def update_combo_semesters(self):
-        '''updates the values of the semester combobox'''
-        semesters = [s.name for s in self.tracker.study.semesters]
-        self.semester_combobox['values'] = semesters
-
-    def update_combo_modules(self):
+        parent: the frame where the accordion is placed
         '''
-        updates the values of the modules combobox depending on the semesters combobox
-        '''
-        sem_name = self.semester_var.get()
-        self.module_combobox['values'] = self.tracker.study.get_modules(
-            semName=sem_name)
+        # create a new accordion if none exists
+        if self.accordion is None:
+            self.accordion = Accordion(parent)
+            self.accordion.grid(row=0, column=0, sticky='ns')
 
-    def update_combo_categories(self):
-        '''
-        updates the values ot the categories combobox depending on the semester and module comboboxes
-        '''
-        sem_name = self.semester_var.get()
-        mod_name = self.module_var.get()
-        self.category_combobox['values'] = self.tracker.study.get_categories(
-            semName=sem_name, modName=mod_name)
+        # remove deleted entries
+        semesterNames = [sem.name for sem in self.tracker.study.semesters]
+        for sec in self.accordion.sections:
+            if sec.name not in semesterNames:
+                # delete the section
+                self.accordion.remove_section(sec)
+                continue
 
-    def update_treeview(self):
-        '''updates the treeview
+            sem = self.tracker.study.get_semester(sec.name)
+            moduleNames = [mod.name for mod in sem.modules]
+            for entry in sec.sub_elements:
+                if entry.name not in moduleNames:
+                    # delete the entry
+                    sec.remove_element(entry)
+                    continue
 
-        deletes all existing items and generates new items depending on the
-        selected  semester, module and category
-
-        serializes the data for the click event
-        '''
-
-        # clean all existing entries
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
-        semName = self.semester_var.get()
-        modName = self.module_var.get()
-        catName = self.category_var.get()
-
+        # add new entries
         for sem in self.tracker.study.semesters:
-            if semName in sem.name or semName == "":
+            foundSem = False
+            for sec in self.accordion.sections:
+                if sem.name == sec.name:
+                    # found the semester, check for the modules and continue with next semester
+                    foundSem = True
+                    for mod in sem.modules:
+                        foundMod = False
+                        for entry in sec.sub_elements:
+                            if mod.name == entry.name:
+                                # found the module continue with next module
+                                foundMod = True
+                                break
+                        if not foundMod:
+                            sec.add_element(
+                                mod.name, lambda mod=mod: self.print_chart(mod))
+                    break
+            if not foundSem:
+                section = self.accordion.add_section(
+                    sem.name, lambda sem=sem: self.print_chart(sem))
                 for mod in sem.modules:
-                    if modName in mod.name or modName == "":
-                        for entry in mod.entries:
-                            add = True
-                            if (catName in entry.category or catName == ""):
-                                start_time = entry.start_time.strftime(
-                                    "%Y-%m-%d %H:%M:%S")
-                                duration = str(entry.get_duration()).split('.')[
-                                    0]  # remove micros
-                                sem_obj = pickle.dumps(sem)
-                                sem_base64 = base64.b64encode(
-                                    sem_obj).decode('utf-8')
-                                mod_obj = pickle.dumps(mod)
-                                mod_base64 = base64.b64encode(
-                                    mod_obj).decode('utf-8')
-                                entry_obj = pickle.dumps(entry)
-                                entry_base64 = base64.b64encode(
-                                    entry_obj).decode('utf-8')
-                                self.tree.insert(
-                                    "", "end", text=sem.name,
-                                    values=(mod.name, entry.category,
-                                            entry.comment, start_time,
-                                            duration), tags=(sem_base64, mod_base64, entry_base64,))
+                    # add all modules because whole section was added
+                    section.add_element(
+                        mod.name, lambda mod=mod: self.print_chart(mod))
+        self.accordion.reorder()
+
+    def set_active_chart(self, chart_type):
+        '''sets the active chart type and prints the chart
+
+        chart_type: the chart type to set
+        '''
+        self.active_chart = chart_type
+        self.print_chart(self.chart_scope)
+
+    def print_chart(self, scope):
+        '''prints the chart
+
+        generates the data depending on the scope, creates the chart defined
+        by the active chart type and plots it
+
+        scope: the data (study, Semester, Module) which will be printed
+        '''
+        # prevent memory leak because matplotlib figure remains open
+        # TODO: write to Testprotocol
+        # TODO: Burndown check for instance of scope
+        if self.chart:
+            self.chart.destroy()
+
+        # create data depending on the chart type
+        if self.active_chart == ChartType.BURNDOWN:
+            stopTimes = []
+            values = []
+            start = []
+            total_work = 0
+            planned_end = 0
+            end = []
+            if isinstance(scope, Study):
+                total_work = scope.ECTS
+                for sem in scope.semesters:
+                    for mod in sem.modules:
+                        start.append(mod.start)
+                        end.append(mod.plannedEnd)
+                        if mod.stop != None:
+                            stopTimes.append(mod.stop)
+                            values.append(mod.ECTS)
+            elif isinstance(scope, Semester):
+                # Only Modules which are already tracked are respected in the
+                # diagram
+                for mod in scope.modules:
+                    start.append(mod.start)
+                    end.append(mod.plannedEnd)
+                    total_work += mod.ECTS
+                    if mod.stop != None:
+                        stopTimes.append(mod.stop)
+                        values.append(mod.ECTS)
+            elif isinstance(scope, Module):
+                pass
+
+            # get the latest planned end
+            end.sort(reverse=True)
+            planned_end = end[0].strftime('%Y.%m')
+
+            # get the first start of a module
+            start.sort()
+            stopTimes.append(start[0])
+            values.append(0)
+
+            # sort the values
+            sortedList = sorted(zip(stopTimes, values))
+            a = [x.strftime('%Y.%m') for x, _ in sortedList]
+            b = [x for _, x in sortedList]
+            self.chart = ChartFactory.create_chart(
+                self.active_chart, a, b, total_work, planned_end)
+        else:
+            durations, _ = scope.get_durations()
+            names = [dur.get('Name')for dur in durations]
+            values = [dur.get('Duration').total_seconds() for dur in durations]
+            self.chart = ChartFactory.create_chart(
+                self.active_chart, names, values)
+        self.chart.plot(self.plot_frame)
 
     def save_data(self, filename=None):  # TODO: save in correct format
         '''saves the data
