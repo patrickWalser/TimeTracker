@@ -1,8 +1,9 @@
 from my_accordion import Accordion
 import tkinter as tk
-from tkinter import messagebox, ttk, Frame
+from tkinter import messagebox, ttk, Frame, Menu
 import datetime
 import pickle
+import json
 import base64
 from charts import ChartType, ChartFactory
 from tkcalendar import DateEntry
@@ -475,8 +476,21 @@ class TimeTrackerGUI:
         self.root.title("TimeTracker")
         self.root.geometry('900x450')
 
-        self.tracker = TimeTracker(180, 30)
+        #self.tracker = TimeTracker(180, 30)
 
+        # file menu for opening, saving, etc.
+        menu = Menu(root)
+        root.config(menu= menu)
+        filemenu = Menu(menu)
+        menu.add_cascade(label="File", menu= filemenu)
+        filemenu.add_command(label="New", command=lambda:self.new_tracker())
+        filemenu.add_command(label="Open", command=lambda:self.open_tracker())
+        filemenu.add_command(label="Save as", command=lambda:self.save_as())
+
+        helpmenu= Menu(menu)
+        menu.add_cascade(label="Help", menu= helpmenu)
+        helpmenu.add_command(label="About", command=lambda:print("about clicked"))
+        
         # separate window into frames using grid
         header_view = Frame(root)
         header_view.grid(row=0, column=0, sticky='news')
@@ -590,13 +604,61 @@ class TimeTrackerGUI:
         self.plot_frame.grid(row=1, sticky = 'news')
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.root.after(0,self.initial_load)
+
+        # TODO: updatechart  Scope when different tracker is loaded
+        #self.chart_scope = self.tracker.study
+        self.chart = None
+
+    def initial_load(self):
+        '''load the initial data
+        
+        load data and update gui elements
+        '''
         self.load_data()
         self.update_treeview()
-
         self.chart_scope = self.tracker.study
-        self.chart = None
-        
-        tracker_view.tkraise()
+
+# Commands for the filemenu
+    def new_tracker(self):
+        '''opens a window to create a new tracker'''
+        # set name, planned end, num ECTS, hoursPerEcts
+        # TODO: plannedEnd ?
+        # TODO: save the old tracker?
+        new_window = tk.Toplevel(self.root)
+        new_window.title("New Tracker")
+        # force window to be in foreground
+        new_window.grab_set()
+        new_window.transient(self.root)
+
+        tk.Label(new_window,text="Total Amount of ECTS").grid(row=0, column=0)
+        self.ECTS_entry = tk.Entry(new_window).grid(row=0, column=1)
+
+        tk.Label(new_window,text="Hours per ECTS").grid(row=1, column=0)
+        self.hoursPerECTS_entry = tk.Entry(new_window).grid(row=1, column=1)
+
+        self.btn_new_tracker_save = tk.Button(new_window,text='save', command=lambda window = new_window:self.save_new_tracker(window)).grid(row=3, column = 0)
+        self.btn_new_tracker_abort = tk.Button(new_window,text='abort', command = lambda:print("abort"))
+
+#TODO: call save_as after creating the tracker?
+    def save_new_tracker(self, window):
+        '''create the tracker and save it'''
+        self.tracker = TimeTracker(self.ECTS_entry, self.hoursPerECTS_entry)
+        self.chart_scope = self.tracker.study
+        window.destroy()
+
+    def open_tracker(self):
+        '''open a previously saved tracker from the filesystem'''
+        data = [('json','*.json')]
+        filename = tk.filedialog.askopenfilename(filetypes=data, defaultextension=data)
+        self.load_data(filename)
+
+    def save_as(self):
+        '''save the current tracker to the filesystem'''
+        data = [('json','*.json')]
+        filename = tk.filedialog.asksaveasfilename(filetypes =data, defaultextension=data)
+        self.save_data(filename)
+
 
     def print_chart(self, scope):
         # prevent memory leak because matplotlib figure remains open
