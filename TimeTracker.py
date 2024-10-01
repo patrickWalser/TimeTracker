@@ -467,6 +467,7 @@ class DateTimeFrame(Frame):
         m = int(self.minute_entry.get())
         return datetime.datetime(year=date.year, month=date.month, day=date.day, hour=h,minute=m)
 
+SETTINGS_FILE = 'settings.json'
 
 class TimeTrackerGUI:
     def __init__(self, root):
@@ -857,25 +858,51 @@ class TimeTrackerGUI:
                                             duration), tags=(sem_base64, mod_base64, entry_base64,))
 
 
-    def save_data(self):  # TODO: save in correct format
-        with open("time_tracking_data.json", "wb") as file:
+    def save_data(self, filename= None):  # TODO: save in correct format
+        if filename is None:
+            filename = "time_tracking_data.json"
+        with open(filename, "wb") as file:
             pickle.dump(self.tracker, file, pickle.HIGHEST_PROTOCOL)
+        self.settings['last_used_file']= filename
+        self.save_settings(self.settings)
 
-    def load_data(self):
+    def load_data(self, filename=None):
+        # no filename given search settings file
+        if filename is None:
+            self.settings = self.load_settings()
+            filename = self.settings.get('last_used_file')
+            if filename is None:    # no existing settings file start new tracker
+                self.new_tracker()
+                return
         try:
-            with open("time_tracking_data.json", "rb") as file:
+            with open(filename, "rb") as file:
                 self.tracker = pickle.load(file)
-                self.semester_var.set(self.tracker.last_semester.name)
+                if(self.tracker.last_semester):
+                    self.semester_var.set(self.tracker.last_semester.name)
                 self.module_var.set(self.tracker.last_module.name)
                 self.category_var.set(self.tracker.last_entry.category)
                 self.comment_var.set(self.tracker.last_entry.comment)
+                self.chart_scope = self.tracker.study
         except FileNotFoundError:
-            self.tracker.study = Study(180, 30)
+            self.new_tracker()
+            pass
         except Exception as e:
             messagebox.showerror("Error", f"Error while loading data: {e}")
 
+    def save_settings(self, settings):
+        with open(SETTINGS_FILE,'w') as file:
+            json.dump(settings,file)
+
+    def load_settings(self):
+        try:
+            with open(SETTINGS_FILE, 'r') as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}
+
     def on_close(self):
-        self.save_data()
+        filename = self.settings.get('last_used_file')
+        self.save_data(filename)
         self.root.destroy()
 
 
