@@ -7,6 +7,7 @@ import json
 import base64
 from charts import ChartType, ChartFactory
 from tkcalendar import DateEntry
+import threading
 
 
 class Entry:
@@ -16,7 +17,7 @@ class Entry:
         '''creates and starts an entry
 
         category: category of the entry as string
-        commen: optional comment as string
+        comment: optional comment as string
         '''
         self.start_time = datetime.datetime.now()
         self.stop_time = None
@@ -166,10 +167,16 @@ class Semester:
     Holds a list of modules
     '''
 
-    def __init__(self, name):
-        '''creates the semester'''
+    def __init__(self, name, ECTS = 0, plannedEnd = None):
+        '''creates the semester
+        
+        name: the name of the semester
+        ECTS: amount of ECTS in the semester
+        plannedEnd: the plannedEnd of the semester
+        '''
         self.modules = []
-        self.ECTS = 0  # TODO: are ECTS necessary?
+        self.ECTS = ECTS
+        self.plannedEnd = plannedEnd
         self.name = name
 
     def __eq__(self, other):
@@ -404,15 +411,18 @@ class TimeTracker:
     Holds the lastEntry.
     '''
 
-    def __init__(self, ECTS, hoursPerECTS, plannedEnd):
+    def __init__(self, study):
         '''creates a TimeTracker
 
         ECTS: number of total ECTS of the Study
         hoursPerECTS: defined number of hours used per ECTS (e.g. 30H/ECTS)
         '''
-        self.study = Study(ECTS, hoursPerECTS, plannedEnd)
+        self.study = study
         self.current_entry = None
         self.last_entry = None
+        self.on_status_change = None
+        self._timer = None
+        self.on_treeview_update = None
 
     def start_tracking(self, semesterName, moduleName, category, comment=""):
         '''starts the tracking.
@@ -426,6 +436,8 @@ class TimeTracker:
         self.current_semester, self.current_module, self.current_entry = self.study.add_entry(
             semesterName=semesterName, moduleName=moduleName,
             category=category, comment=comment)
+        
+        self._start_timer()
 
     def stop_tracking(self):
         ''' stops the current running entry'''
@@ -441,6 +453,38 @@ class TimeTracker:
         self.current_module = None
         self.current_entry = None
 
+        # stop cyclic updates
+        self._stop_timer()
+
+        # notify observer
+        if self.on_status_change:
+            self.on_status_change(datetime.timedelta(0))
+
+    def toggle_tracking(self, semester, module, category, comment=""):
+        if self.current_entry:
+            self.stop_tracking()
+        else:
+            self.start_tracking(semester, module, category, comment)
+        
+        if self.on_treeview_update:
+            self.on_treeview_update()
+
+    def _start_timer(self):
+        """starts a timer for cyclic notification of observer"""
+        def update():
+            if self.current_entry and self.on_status_change:
+                elapsed = datetime.datetime.now() - self.current_entry.start_time
+                self.on_status_change(elapsed) # notfy the GUI
+            self._timer = threading.Timer(1.0, update)
+            self._timer.start()
+        
+        update()    # start first notification
+
+    def _stop_timer(self):
+        """Stops the timer for cyclic notifications"""
+        if self._timer:
+            self._timer.cancel()
+            self._timer = None
 class DateTimeFrame(Frame):
     ''' a user control to combine selection of date and time
 
@@ -500,7 +544,7 @@ class TimeTrackerGUI:
     Handles all necessary events.
     '''
 
-    def __init__(self, root):
+    def __init__(self, root, tracker):
         '''constructor of the UI
 
         initializes the UI, loads stored data, starts new tracker if needed
@@ -508,8 +552,7 @@ class TimeTrackerGUI:
         self.root = root
         self.root.title("TimeTracker")
         self.root.geometry('880x600')
-
-        #self.tracker = TimeTracker(180, 30)
+        self.tracker = tracker
 
         # file menu for opening, saving, etc.
         menu = Menu(root)
@@ -657,6 +700,12 @@ class TimeTrackerGUI:
         # TODO: updatechart  Scope when different tracker is loaded
         #self.chart_scope = self.tracker.study
         self.chart = None
+        self.setup_observers()
+
+    def setup_observers(self):
+        '''register observers'''
+        
+        self.tracker.on_status_change = self.update_tracking_label
 
     def initial_load(self):
         '''load the initial data
@@ -743,26 +792,21 @@ class TimeTrackerGUI:
     def btn_start_stop_click(self):
         ''' start or stop the tracking
 
-        If tracking is started the label is updated.
-        Updates the treeview.
+        Label and button text are updated
         '''
-        if (self.is_tracking):
-            # stop tracking
-            self.tracker.stop_tracking()
+
+        self.tracker.toggle_tracking(self.semester_var.get(), self.module_var.get(),
+                self.category_var.get(), self.comment_var.get())
+        
+        # update button text and label visibility
+        if self.tracker.current_entry:
+            self.start_stop_btn.config(text="Stop")
+            self.tracking_label.config(bg="lightgreen")
+        else:
             self.start_stop_btn.config(text="Start")
             bgColor = self.root.cget("background")
             self.current_duration_label.configure(background=bgColor)
-            self.is_tracking = False
-        else:
-            # start tracking
-            self.tracker.start_tracking(
-                self.semester_var.get(), self.module_var.get(),
-                self.category_var.get(), self.comment_var.get())
-            self.start_stop_btn.config(text="Stop")
-            self.current_duration_label.configure(background='light green')
-            self.is_tracking = True
-            self.update_label()
-
+        
         self.update_treeview()
 
     def btn_finish_click(self):
@@ -771,6 +815,11 @@ class TimeTrackerGUI:
         mod = sem.get_module(self.module_var.get())
         mod.finish_module()
 
+    def update_tracking_label(self, elapsed):
+        '''update the current duration label'''
+        if elapsed:
+            self.current_duration_label.configure(text="Tracking for "+str(elapsed).split('.')[0])
+        
     def update_label(self):
         '''update the current duration label
 
@@ -1167,5 +1216,13 @@ class TimeTrackerGUI:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = TimeTrackerGUI(root)
+
+    # model
+    study = Study(180,30, datetime.datetime.now())
+
+    # controller
+    tracker = TimeTracker(study)
+
+    # view
+    app = TimeTrackerGUI(root, tracker)
     root.mainloop()
