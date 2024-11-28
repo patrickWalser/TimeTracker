@@ -8,6 +8,7 @@ import base64
 from charts import ChartType, ChartFactory
 from tkcalendar import DateEntry
 import threading
+import uuid
 
 
 class Entry:
@@ -19,6 +20,7 @@ class Entry:
         category: category of the entry as string
         comment: optional comment as string
         '''
+        self.id = str(uuid.uuid4())
         self.start_time = datetime.datetime.now()
         self.stop_time = None
         self.category = category
@@ -37,9 +39,7 @@ class Entry:
         if not isinstance(other, Entry):
             return NotImplemented
 
-        return self.start_time == other.start_time and \
-            self.stop_time == other.stop_time and \
-            self.category == other.category and self.comment == other.comment
+        return self.id == other.id
 
     def stop(self):
         '''stops the entry
@@ -72,6 +72,7 @@ class Module:
         ECTS: amount of ECTS (credits) default = 5
         duration: planned duration of the module default = 6 weeks
         '''
+        self.id = str(uuid.uuid4())
         self.entries = []
         self.name = name
         self.ECTS = ECTS
@@ -90,7 +91,7 @@ class Module:
         if not isinstance(other, Module):
             return NotImplemented
 
-        return self.entries == other.entries and self.name == other.name and self.ECTS == other.ECTS and self.start == other.start and self.stop == other.stop and self.plannedEnd == other.plannedEnd
+        return self.id == other.id
 
     def start_module(self, duration):
         '''Starts the module.
@@ -174,6 +175,7 @@ class Semester:
         ECTS: amount of ECTS in the semester
         plannedEnd: the plannedEnd of the semester
         '''
+        self.id = str(uuid.uuid4())
         self.modules = []
         self.ECTS = ECTS
         self.plannedEnd = plannedEnd
@@ -192,7 +194,7 @@ class Semester:
         if not isinstance(other, Module):
             return NotImplemented
 
-        return self.modules == other.modules and self.ECTS == other.ECTS and self.name == other.name
+        return self.id == other.id
 
     def add_module(self, module):
         '''adds a Module to the list
