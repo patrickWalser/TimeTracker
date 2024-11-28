@@ -487,6 +487,65 @@ class TimeTracker:
         if self._timer:
             self._timer.cancel()
             self._timer = None
+
+    def serialize_object(self, obj):
+        '''serializes an Objekt to a unique id'''
+        try:
+            if obj.id:
+                pass
+        except AttributeError:
+            obj.id = str(uuid.uuid4())
+
+        if isinstance(obj, Semester):
+            return f"semester:{obj.id}"
+        elif isinstance(obj, Module):
+            return f"module:{obj.id}"
+        elif isinstance(obj, Entry):
+            return f"entry:{obj.id}"
+        raise ValueError("Unsupported objext type for serialization")
+
+    def deserialize_object(self, obj_id):
+        '''deserializes from an id to an object'''
+
+        obj_type, key = obj_id.split(":",1)
+        if obj_type == "semester":
+            for semester in self.study.semesters:
+                if semester.id == key:
+                    return semester
+        elif obj_type == "module":
+            for semester in self.study.semesters:
+                for module in semester.modules:
+                    if module.id == key:
+                        return module
+        elif obj_type == "entry":
+            for semester in self.study.semesters:
+                for module in semester.modules:
+                    for entry in module.entries:
+                        if entry.id == key:
+                            return entry
+        return None
+
+    def get_filtered_data_list(self, selected_semester, selected_module, selected_category):
+        filtered_data = []
+
+        # filter by selected semester
+        for semester in self.study.semesters:
+            if selected_semester and semester.name != selected_semester:
+                continue  # skip if semester names dont match
+
+            # filter by selected module
+            for module in semester.modules:
+                if selected_module and module.name != selected_module:
+                    continue  # skip if module names dont match
+
+                for entry in module.entries:
+                    if selected_category and entry.name != selected_category:
+                        continue # skip if categories dont match
+
+                    filtered_data.append({"semester":semester, "module":module, "entry":entry})
+
+        return filtered_data
+
 class DateTimeFrame(Frame):
     ''' a user control to combine selection of date and time
 
@@ -666,7 +725,7 @@ class TimeTrackerGUI:
         self.tree.column('Start', minwidth=0, width=125, stretch=True)
         self.tree.column('Duration', minwidth=0, width=80, stretch=True)
 
-        self.tree.bind("<Double-Button-1>", self.tree_click)
+        self.tree.bind("<Double-Button-1>", self.on_tree_item_click)
         self.tree.pack(side='left')
 
         self.yscroll = ttk.Scrollbar(self.treeview_frame, orient=tk.VERTICAL,
@@ -708,6 +767,7 @@ class TimeTrackerGUI:
         '''register observers'''
         
         self.tracker.on_status_change = self.update_tracking_label
+        self.tracker.on_treeview_update = self.update_treeview
 
     def initial_load(self):
         '''load the initial data
@@ -870,41 +930,33 @@ class TimeTrackerGUI:
         serializes the data for the click event
         '''
 
-        # clean all existing entries
-        for item in self.tree.get_children():
-            self.tree.delete(item)
-
         semName = self.semester_var.get()
         modName = self.module_var.get()
         catName = self.category_var.get()
 
-        for sem in self.tracker.study.semesters:
-            if semName in sem.name or semName == "":
-                for mod in sem.modules:
-                    if modName in mod.name or modName == "":
-                        for entry in mod.entries:
-                            add = True
-                            if (catName in entry.category or catName == ""):
-                                start_time = entry.start_time.strftime(
-                                    "%Y-%m-%d %H:%M:%S")
-                                duration = str(entry.get_duration()).split('.')[
-                                    0]  # remove micros
-                                sem_obj = pickle.dumps(sem)
-                                sem_base64 = base64.b64encode(
-                                    sem_obj).decode('utf-8')
-                                mod_obj = pickle.dumps(mod)
-                                mod_base64 = base64.b64encode(
-                                    mod_obj).decode('utf-8')
-                                entry_obj = pickle.dumps(entry)
-                                entry_base64 = base64.b64encode(
-                                    entry_obj).decode('utf-8')
-                                self.tree.insert(
-                                    "", "end", text=sem.name,
-                                    values=(mod.name, entry.category,
-                                            entry.comment, start_time,
-                                            duration), tags=(sem_base64, mod_base64, entry_base64,))
+        treeview_data = self.tracker.get_filtered_data_list(semName,modName,catName)
 
-    def tree_click(self, event):
+        # clean all existing entries
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        for item in treeview_data:
+            semester = item['semester']
+            module = item['module']
+            entry = item['entry']
+            tags = (self.tracker.serialize_object(semester), 
+                    self.tracker.serialize_object(module), 
+                    self.tracker.serialize_object(entry))
+            start_time = entry.start_time.strftime(
+                "%Y-%m-%d %H:%M:%S")
+            duration = str(entry.get_duration()).split('.')[
+                0]  # remove micros
+            self.tree.insert("", "end", text=semester.name,
+                             values=(module.name, entry.category,
+                                     entry.comment, start_time,
+                                     duration), tags=tags)
+
+    def on_tree_item_click(self, event):
         '''click event of the treeview
 
         calls a new window to editor remove the clicked entry or create a
@@ -914,16 +966,14 @@ class TimeTrackerGUI:
         selected = self.tree.focus()
         item = self.tree.item(selected)
         tags = item['tags']
-        sem_base64 = tags[0]
-        sem_pickle = base64.b64decode(sem_base64)
-        sem = pickle.loads(sem_pickle)
-        mod_base64 = tags[1]
-        mod_pickle = base64.b64decode(mod_base64)
-        mod = pickle.loads(mod_pickle)
+        sem = self.tracker.deserialize_object(tags[0])
+        mod = self.tracker.deserialize_object(tags[1])
+        entry = self.tracker.deserialize_object(tags[2])
 
-        entry_base64 = tags[2]
-        entry_pickle = base64.b64decode(entry_base64)
-        entry = pickle.loads(entry_pickle)
+        self.open_edit_entry_dialog(sem, mod, entry)
+        
+
+    def open_edit_entry_dialog(self, sem, mod, entry):
 
         # new window
         edit_window = tk.Toplevel(self.root)
@@ -957,20 +1007,24 @@ class TimeTrackerGUI:
         self.stop_time.grid(row=2, columnspan=4, sticky='w')
         self.stop_time.set_datetime(entry.stop_time)
 
+        self.module_start = DateTimeFrame(edit_window, label="Module start:")
+        self.module_start.grid(row=3, columnspan=4, sticky='w')
+        self.module_start.set_datetime(mod.start)
+        
         if mod.stop != None:
             self.module_end = DateTimeFrame(edit_window, label="Module end:")
-            self.module_end.grid(row=3, columnspan=4, sticky='w')
+            self.module_end.grid(row=4, columnspan=4, sticky='w')
             self.module_end.set_datetime(mod.stop)
 
         add_btn = tk.Button(edit_window, text="Save as new entry",
                             command=lambda s=sem, m=mod, e=entry: self.add_new_entry())
-        add_btn.grid(row=4, column=0, sticky='news')
+        add_btn.grid(row=5, column=0, sticky='news')
         edit_btn = tk.Button(edit_window, text='Save entry',
                              command=lambda s=sem, m=mod, e=entry: self.edit(s, m, e))
-        edit_btn.grid(row=4, column=1, sticky='news')
+        edit_btn.grid(row=5, column=1, sticky='news')
         remove_btn = tk.Button(edit_window, text='Delete entry',
                                command=lambda s=sem, m=mod, e=entry: self.remove(s, m, e))
-        remove_btn.grid(row=4, column=2, sticky='news')
+        remove_btn.grid(row=5, column=2, sticky='news')
 
     def remove(self, sem, mod, entry):
         '''remove an entry
