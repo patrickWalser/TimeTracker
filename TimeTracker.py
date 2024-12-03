@@ -404,6 +404,24 @@ class Study:
         tmp_dict = dict.fromkeys(cat_lst)
         return list(tmp_dict)
 
+    def set_last_information(self, semester, module, entry):
+        '''sets the last information
+
+        semester: the last tracked semester
+        module: the last tracked module
+        entry: the last tracked entry
+        '''
+        if not isinstance(semester, Semester) \
+                or not isinstance(module, Module) or not isinstance(entry, Entry):
+            raise TypeError()
+
+        self.last_semester = semester
+        self.last_module = module
+        self.last_entry = entry
+
+    def get_last_information(self):
+        '''get the information about the last tracking'''
+        return self.last_semester, self.last_module, self.last_entry
 
 class TimeTracker:
     '''Main of the TimeTracker
@@ -421,7 +439,6 @@ class TimeTracker:
         '''
         self.study = study
         self.current_entry = None
-        self.last_entry = None
         self.on_status_change = None
         self._timer = None
         self.on_treeview_update = None
@@ -448,9 +465,7 @@ class TimeTracker:
             raise RuntimeError("Currrently no tracking is active")
 
         self.current_entry.stop()
-        self.last_semester = self.current_semester
-        self.last_module = self.current_module
-        self.last_entry = self.current_entry
+        self.study.set_last_information(self.current_semester, self.current_module, self.current_entry)
         self.current_semester = None
         self.current_module = None
         self.current_entry = None
@@ -539,12 +554,16 @@ class TimeTracker:
                     continue  # skip if module names dont match
 
                 for entry in module.entries:
-                    if selected_category and entry.name != selected_category:
+                    if selected_category and entry.category != selected_category:
                         continue # skip if categories dont match
 
                     filtered_data.append({"semester":semester, "module":module, "entry":entry})
 
         return filtered_data
+    
+    def get_initial_entry(self):
+        '''gets the information which should used at startup'''
+        return self.study.get_last_information()
 
 class DateTimeFrame(Frame):
     ''' a user control to combine selection of date and time
@@ -776,6 +795,7 @@ class TimeTrackerGUI:
         '''
         self.load_data()
         self.update_treeview()
+        self.setup_observers()
         self.chart_scope = self.tracker.study
 
 # Commands for the filemenu
@@ -863,7 +883,7 @@ class TimeTrackerGUI:
         # update button text and label visibility
         if self.tracker.current_entry:
             self.start_stop_btn.config(text="Stop")
-            self.tracking_label.config(bg="lightgreen")
+            self.current_duration_label.config(bg="lightgreen")
         else:
             self.start_stop_btn.config(text="Start")
             bgColor = self.root.cget("background")
@@ -1211,7 +1231,7 @@ class TimeTrackerGUI:
         if filename is None:
             filename = "time_tracking_data.json"
         with open(filename, "wb") as file:
-            pickle.dump(self.tracker, file, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.tracker.study, file, pickle.HIGHEST_PROTOCOL)
         self.settings['last_used_file'] = filename
         self.save_settings(self.settings)
 
@@ -1234,12 +1254,17 @@ class TimeTrackerGUI:
                 return
         try:
             with open(filename, "rb") as file:
-                self.tracker = pickle.load(file)
-                if (self.tracker.last_semester):
-                    self.semester_var.set(self.tracker.last_semester.name)
-                self.module_var.set(self.tracker.last_module.name)
-                self.category_var.set(self.tracker.last_entry.category)
-                self.comment_var.set(self.tracker.last_entry.comment)
+                self.tracker.study = pickle.load(file)
+
+                sem,mod,entry = self.tracker.get_initial_entry()
+                if(sem):
+                    self.semester_var.set(sem.name)
+                if(mod):
+                    self.module_var.set(mod.name)
+                if(entry):
+                    self.category_var.set(entry.category)
+                    self.comment_var.set(entry.comment)
+
                 self.chart_scope = self.tracker.study
         except FileNotFoundError:
             self.new_tracker()

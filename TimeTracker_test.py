@@ -687,6 +687,41 @@ class UnitTestStudy(unittest.TestCase):
         sem_lst = study.get_categories(semName="sem1", modName="mod1")
         self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
                          expected list")
+        
+    def test_set_last_information(self):
+        '''test if setting the last information works'''
+        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        
+        sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
+        with self.assertRaises(TypeError):
+            study.set_last_information("a","b","c")
+        with self.assertRaises(TypeError):
+            study.set_last_information(mod,mod,entry)
+        with self.assertRaises(TypeError):
+            study.set_last_information(sem,sem,entry)
+        with self.assertRaises(TypeError):
+            study.set_last_information(sem,mod,mod)
+
+        study.set_last_information(sem, mod, entry)
+        self.assertEqual(sem, study.last_semester, "last semester was not set correctly") 
+        self.assertEqual(mod, study.last_module, "last module was not set correctly")
+        self.assertEqual(entry, study.last_entry, "last entry was not set correctly")                
+    
+    def test_get_last_information(self):
+        '''test if reading the last information works'''
+        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        
+        sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
+        with self.assertRaises(AttributeError):
+            s,m,e = study.get_last_information()
+
+        study.set_last_information(sem, mod, entry)
+        s,m,e = study.get_last_information()
+
+        self.assertEqual(sem, s, "last semester was not set correctly") 
+        self.assertEqual(mod, m, "last module was not set correctly")
+        self.assertEqual(entry, e, "last entry was not set correctly")  
+
 
 
 class TimeTrackerUnitTest(unittest.TestCase):
