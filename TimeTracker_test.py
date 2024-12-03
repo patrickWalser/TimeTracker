@@ -625,13 +625,17 @@ class UnitTestStudy(unittest.TestCase):
         study = TimeTracker.Study(180, 30, datetime.datetime.now())
 
         # generate data
+        ref_lst = []
+        ref_lst2 = []
         sem_data = ["sem1", "sem11", "sem2"]
         for sem_name in sem_data:
             sem = TimeTracker.Semester(name=sem_name)
-            sem.add_entry(moduleName="mod_"+sem_name, category="")
+            m,_=sem.add_entry(moduleName="mod_"+sem_name, category="")
             study.add_semester(sem)
+            ref_lst.append(m)
+            if("sem1" in sem_name):
+                ref_lst2.append(m)
 
-        ref_lst = ["mod_"+sem_name for sem_name in sem_data]
         sem_lst = study.get_modules()
         self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
                          expected list")
@@ -640,9 +644,8 @@ class UnitTestStudy(unittest.TestCase):
         self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
                          expected list")
 
-        ref_lst = ["mod_sem1", "mod_sem11"]
         sem_lst = study.get_modules(semName="sem1")
-        self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
+        self.assertEqual(ref_lst2, sem_lst, "study.get_modules did not return \
                          expected list")
 
     def test_get_categories(self):
@@ -763,7 +766,7 @@ class TimeTrackerUnitTest(unittest.TestCase):
         self.assertIsNotNone(timeTracker.current_entry, "Current entry is None\
                              although tracking was started successfully")
 
-        sem = timeTracker.study.get_semester("sem")
+        sem = timeTracker._study.get_semester("sem")
         mod = sem.get_module("mod")
 
         self.assertEqual(first=timeTracker.current_entry, second=mod.entries[0],
@@ -787,7 +790,7 @@ class TimeTrackerUnitTest(unittest.TestCase):
                           reset after stopping the tracking")
 
         ref_stop = datetime.datetime.now()
-        sem = timeTracker.study.get_semester("sem")
+        sem = timeTracker._study.get_semester("sem")
         mod = sem.get_module("mod")
         stop = mod.entries[0].stop_time
 

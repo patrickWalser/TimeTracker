@@ -383,9 +383,8 @@ class Study:
         mod_lst = []
         for s in self.semesters:
             if semName in s.name:
-                mod_lst.extend([mod.name for mod in s.modules])
-        tmp_dict = dict.fromkeys(mod_lst)
-        return list(tmp_dict)
+                mod_lst.extend(s.modules)
+        return mod_lst
 
     def get_categories(self, semName="", modName=""):
         '''get all categories of the semesters / modules
@@ -396,11 +395,11 @@ class Study:
         modName: name which must be contained by the modules
         returns list of categories'''
         cat_lst = []
-        for sem in self.semesters:
-            if semName in sem.name:
-                for mod in sem.modules:
-                    if modName in mod.name:
-                        cat_lst.extend(mod.get_categories())
+        mod_lst = self.get_modules(semName)
+        
+        for mod in mod_lst:
+            if modName in mod.name:
+                cat_lst.extend(mod.get_categories())
         tmp_dict = dict.fromkeys(cat_lst)
         return list(tmp_dict)
 
@@ -437,7 +436,7 @@ class TimeTracker:
         ECTS: number of total ECTS of the Study
         hoursPerECTS: defined number of hours used per ECTS (e.g. 30H/ECTS)
         '''
-        self.study = study
+        self._study = study
         self.current_entry = None
         self.on_status_change = None
         self._timer = None
@@ -452,7 +451,7 @@ class TimeTracker:
         category: the category
         comment: an optional comment
         '''
-        self.current_semester, self.current_module, self.current_entry = self.study.add_entry(
+        self.current_semester, self.current_module, self.current_entry = self._study.add_entry(
             semesterName=semesterName, moduleName=moduleName,
             category=category, comment=comment)
         
@@ -465,7 +464,7 @@ class TimeTracker:
             raise RuntimeError("Currrently no tracking is active")
 
         self.current_entry.stop()
-        self.study.set_last_information(self.current_semester, self.current_module, self.current_entry)
+        self._study.set_last_information(self.current_semester, self.current_module, self.current_entry)
         self.current_semester = None
         self.current_module = None
         self.current_entry = None
@@ -524,16 +523,16 @@ class TimeTracker:
 
         obj_type, key = obj_id.split(":",1)
         if obj_type == "semester":
-            for semester in self.study.semesters:
+            for semester in self._study.semesters:
                 if semester.id == key:
                     return semester
         elif obj_type == "module":
-            for semester in self.study.semesters:
+            for semester in self._study.semesters:
                 for module in semester.modules:
                     if module.id == key:
                         return module
         elif obj_type == "entry":
-            for semester in self.study.semesters:
+            for semester in self._study.semesters:
                 for module in semester.modules:
                     for entry in module.entries:
                         if entry.id == key:
@@ -544,7 +543,7 @@ class TimeTracker:
         filtered_data = []
 
         # filter by selected semester
-        for semester in self.study.semesters:
+        for semester in self._study.semesters:
             if selected_semester and semester.name != selected_semester:
                 continue  # skip if semester names dont match
 
@@ -563,7 +562,32 @@ class TimeTracker:
     
     def get_initial_entry(self):
         '''gets the information which should used at startup'''
-        return self.study.get_last_information()
+        return self._study.get_last_information()
+    
+    def get_semester(self, semName):
+        '''get a semester by its name'''
+        return self._study.get_semester(semName)
+
+    def get_semesters(self):
+        '''get all semesters of the study'''
+        return self._study.semesters
+    
+    def get_semester_names(self):
+        ''' get all semester names of the study'''
+        return [s.name for s in self.get_semesters]
+
+    def get_modules(self, semName):
+        '''get all modules of a semester'''
+        return self._study.get_modules(semName)
+    
+    def get_module_names(self, semName):
+        '''get all module names of a semester'''
+        return self.get_modules(semName)
+
+    def get_category_names(self, semName, modName):
+        '''get all category names of a module'''
+        return self._study.get_categories(semName, modName)
+
 
 class DateTimeFrame(Frame):
     ''' a user control to combine selection of date and time
@@ -921,15 +945,14 @@ class TimeTrackerGUI:
 
     def update_combo_semesters(self):
         '''updates the values of the semester combobox'''
-        semesters = [s.name for s in self.tracker.study.semesters]
-        self.semester_combobox['values'] = semesters
+        self.semester_combobox['values'] = self.tracker.get_semester_names()
 
     def update_combo_modules(self):
         '''
         updates the values of the modules combobox depending on the semesters combobox
         '''
         sem_name = self.semester_var.get()
-        self.module_combobox['values'] = self.tracker.study.get_modules(
+        self.module_combobox['values'] = self.tracker.get_module_names(
             semName=sem_name)
 
     def update_combo_categories(self):
@@ -938,9 +961,9 @@ class TimeTrackerGUI:
         '''
         sem_name = self.semester_var.get()
         mod_name = self.module_var.get()
-        self.category_combobox['values'] = self.tracker.study.get_categories(
+        self.category_combobox['values'] = self.tracker.get_category_names(
             semName=sem_name, modName=mod_name)
-
+   
     def update_treeview(self):
         '''updates the treeview
 
@@ -1101,32 +1124,31 @@ class TimeTrackerGUI:
             self.accordion.grid(row=0, column=0, sticky='ns')
 
         # remove deleted entries
-        semesterNames = [sem.name for sem in self.tracker.study.semesters]
+        semesterNames = self.tracker.get_semester_names()
         for sec in self.accordion.sections:
             if sec.name not in semesterNames:
                 # delete the section
                 self.accordion.remove_section(sec)
                 continue
 
-            sem = self.tracker.study.get_semester(sec.name)
-            moduleNames = [mod.name for mod in sem.modules]
-            for entry in sec.sub_elements:
-                if entry.name not in moduleNames:
+            moduleNames = self.tracker.get_module_names(sec.name)
+            for element in sec.sub_elements:
+                if element.name not in moduleNames:
                     # delete the entry
-                    sec.remove_element(entry)
+                    sec.remove_element(element)
                     continue
 
         # add new entries
-        for sem in self.tracker.study.semesters:
+        for sem in self.tracker.get_semesters():
             foundSem = False
             for sec in self.accordion.sections:
                 if sem.name == sec.name:
                     # found the semester, check for the modules and continue with next semester
                     foundSem = True
-                    for mod in sem.modules:
+                    for mod in self.tracker.get_modules(sem.name):
                         foundMod = False
-                        for entry in sec.sub_elements:
-                            if mod.name == entry.name:
+                        for element in sec.sub_elements:
+                            if mod.name == element.name:
                                 # found the module continue with next module
                                 foundMod = True
                                 break
@@ -1137,7 +1159,7 @@ class TimeTrackerGUI:
             if not foundSem:
                 section = self.accordion.add_section(
                     sem.name, lambda sem=sem: self.print_chart(sem))
-                for mod in sem.modules:
+                for mod in self.tracker.get_modules(sem.name):
                     # add all modules because whole section was added
                     section.add_element(
                         mod.name, lambda mod=mod: self.print_chart(mod))
