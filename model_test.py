@@ -1,27 +1,27 @@
 import unittest
-import TimeTracker
+import model
 import datetime
 from time import sleep
 
 
-class UnitTestEnry(unittest.TestCase):
+class UnitTestEntry(unittest.TestCase):
     def test_init(self):
         '''
         test the Entry constructor
         '''
         # Test without arguments
         with self.assertRaises(TypeError):
-            e = TimeTracker.Entry()
+            e = model.Entry()
 
     def test_equal(self):
         '''
         Test the __eq__ check
         '''
-        e = TimeTracker.Entry("a")
-        e1 = TimeTracker.Entry("b")
+        e = model.Entry("a")
+        e1 = model.Entry("b")
         sleep(1)
-        e2 = TimeTracker.Entry("a")
-        x = TimeTracker.Module(name="")
+        e2 = model.Entry("a")
+        x = model.Module(name="")
 
         self.assertEqual(
             e == x, False, "Comparing to wrong Type did not return NotImplemented")
@@ -38,7 +38,7 @@ class UnitTestEnry(unittest.TestCase):
         hard coded timeout is used
         '''
         timeout = 10
-        e = TimeTracker.Entry("")
+        e = model.Entry("")
         sleep(timeout)
         duration = e.stop()
 
@@ -54,7 +54,7 @@ class UnitTestEnry(unittest.TestCase):
         hard coded timeout is used
         '''
         timeout = 10
-        e = TimeTracker.Entry("")
+        e = model.Entry("")
         sleep(timeout)
         duration_before_stop = e.get_duration()
         sleep(timeout)
@@ -91,10 +91,10 @@ class UnitTestModule(unittest.TestCase):
 
         # test with missing argument
         with self.assertRaises(TypeError):
-            mod = TimeTracker.Module()
+            mod = model.Module()
 
         # test if start and planned end are set correctly
-        mod = TimeTracker.Module(name="test")
+        mod = model.Module(name="test")
         start = datetime.datetime.now()
         self.assertAlmostEqual(first=start, second=mod.start,
                                msg="start time of the module\
@@ -111,11 +111,11 @@ class UnitTestModule(unittest.TestCase):
         '''
         Test the __eq__ check
         '''
-        m = TimeTracker.Module("a")
-        m1 = TimeTracker.Module("b")
+        m = model.Module("a")
+        m1 = model.Module("b")
         sleep(1)
-        m2 = TimeTracker.Module("a")
-        e = TimeTracker.Entry("")
+        m2 = model.Module("a")
+        e = model.Entry("")
 
         self.assertEqual(
             m == e, False, "Comparing to wrong Type did not return NotImplemented")
@@ -129,7 +129,7 @@ class UnitTestModule(unittest.TestCase):
     def test_start_module(self):
         '''test the start_module function'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         # test with missing argument
         with self.assertRaises(TypeError):
@@ -147,7 +147,7 @@ class UnitTestModule(unittest.TestCase):
     def test_addEntry(self):
         ''' tests if an entry is added correctly'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         # test with missing argument
         with self.assertRaises(TypeError):
@@ -167,7 +167,7 @@ class UnitTestModule(unittest.TestCase):
     def test_removeEntry(self):
         ''' tests if an entry is removed correctly'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         # test with missing argument
         with self.assertRaises(TypeError):
@@ -193,7 +193,7 @@ class UnitTestModule(unittest.TestCase):
     def test_get_durations(self):
         ''' tests if the durations are returned correct'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         data_categories = ["a", "b", "c", "d", "e", "f"]
         data_durations = [1, 10, 100]
@@ -225,7 +225,7 @@ class UnitTestModule(unittest.TestCase):
     def test_get_categories(self):
         ''' tests if the categories are returned correct'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         data_categories = ["a", "b", "c", "d", "e", "f"]
         data_durations = [1, 10, 100]
@@ -246,20 +246,20 @@ class UnitTestSemester(unittest.TestCase):
         '''tests constructor of class Semester'''
         # test for missing argument
         with self.assertRaises(TypeError):
-            sem = TimeTracker.Semester()
+            sem = model.Semester()
 
-        sem = TimeTracker.Semester(name="test")
+        sem = model.Semester(name="test")
         self.assertTrue(len(sem.modules) == 0, msg="entry list is not empty")
 
     def test_equal(self):
         '''
         Test the __eq__ check
         '''
-        s = TimeTracker.Semester("a")
-        s1 = TimeTracker.Semester("b")
+        s = model.Semester("a")
+        s1 = model.Semester("b")
         sleep(1)
-        s2 = TimeTracker.Semester("a")
-        e = TimeTracker.Entry("")
+        s2 = model.Semester("a")
+        e = model.Entry("")
 
         self.assertEqual(
             s == e, False, "Comparing to wrong Type did not return NotImplemented")
@@ -272,8 +272,8 @@ class UnitTestSemester(unittest.TestCase):
 
     def test_add_module(self):
         '''tests if modules can be added to semester'''
-        sem = TimeTracker.Semester("semester")
-        mod = TimeTracker.Module("module")
+        sem = model.Semester("semester")
+        mod = model.Module("module")
 
         # check if list is empty
         self.assertEqual(first=0, second=len(sem.modules),
@@ -285,7 +285,7 @@ class UnitTestSemester(unittest.TestCase):
                          msg="list of modules is not empty")
 
         # try to add wrong type
-        entry = TimeTracker.Entry(category="cat")
+        entry = model.Entry(category="cat")
         with self.assertRaises(TypeError):
             sem.add_module(entry)
 
@@ -296,7 +296,7 @@ class UnitTestSemester(unittest.TestCase):
         '''tests if entries are created correctly
         and are added to the module
         '''
-        sem = TimeTracker.Semester("semester")
+        sem = model.Semester("semester")
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -324,7 +324,7 @@ class UnitTestSemester(unittest.TestCase):
         '''tests if entries are removed correctly
         and if modules without entries are deleted
         '''
-        sem = TimeTracker.Semester("semester")
+        sem = model.Semester("semester")
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -361,7 +361,7 @@ class UnitTestSemester(unittest.TestCase):
     def test_get_durations(self):
         '''test if correct module durations are returned'''
 
-        sem = TimeTracker.Semester("semester")
+        sem = model.Semester("semester")
         data_modules = ["mod1", "mod2"]
         data_categories = ["a", "b", "c", "d", "e", "f"]
         data_durations = [1, 10, 100]
@@ -392,7 +392,7 @@ class UnitTestSemester(unittest.TestCase):
     def test_get_module(self):
         '''test if a module can be searched by name'''
 
-        sem = TimeTracker.Semester("sem")
+        sem = model.Semester("sem")
 
         with self.assertRaises(TypeError):
             sem.get_module()
@@ -400,7 +400,7 @@ class UnitTestSemester(unittest.TestCase):
         # generate data
         module_data = ["mod1", "mod2", "mod3"]
         for mod_name in module_data:
-            mod = TimeTracker.Module(name=mod_name)
+            mod = model.Module(name=mod_name)
             sem.add_module(mod)
 
         for mod_name in module_data:
@@ -415,12 +415,12 @@ class UnitTestSemester(unittest.TestCase):
     def test_get_categories(self):
         '''test if all used categories are returned'''
 
-        sem = TimeTracker.Semester("sem")
+        sem = model.Semester("sem")
 
         # generate data
         module_data = ["mod1", "mod11", "mod2"]
         for mod_name in module_data:
-            mod = TimeTracker.Module(name=mod_name)
+            mod = model.Module(name=mod_name)
             mod.add_entry("cat_"+mod_name)
             sem.add_module(mod)
 
@@ -445,21 +445,21 @@ class UnitTestStudy(unittest.TestCase):
 
         # test call with wrong type
         with self.assertRaises(TypeError):
-            TimeTracker.Study()
+            model.Study()
 
         with self.assertRaises(TypeError):
-            TimeTracker.Study(ECTS=5)
+            model.Study(ECTS=5)
 
         with self.assertRaises(TypeError):
-            TimeTracker.Study(hoursPerECTS=30)
+            model.Study(hoursPerECTS=30)
 
         with self.assertRaises(TypeError):
-            TimeTracker.Study(plannedEnd=datetime.datetime.now())
+            model.Study(plannedEnd=datetime.datetime.now())
 
     def test_add_semester(self):
         '''tests if adding semesters works'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
@@ -473,7 +473,7 @@ class UnitTestStudy(unittest.TestCase):
                          msg="list of semesters is not empty")
 
         # test if adding a semester works
-        sem = TimeTracker.Semester(name="semester")
+        sem = model.Semester(name="semester")
         study.add_semester(sem)
 
         self.assertEqual(first=1, second=len(study.semesters),
@@ -482,7 +482,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_add_entry(self):
         '''tests if adding an entry works'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
@@ -520,7 +520,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_remove_entry(self):
         '''tests if removing an entry works'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
@@ -558,7 +558,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_get_durations(self):
         '''test if correct semester durations are returned'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
         data_semesters = ["sem1", "sem2"]
         data_modules = ["mod1", "mod2"]
@@ -598,7 +598,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_get_semester(self):
         '''test if a semester can be searched by name'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         with self.assertRaises(TypeError):
@@ -607,7 +607,7 @@ class UnitTestStudy(unittest.TestCase):
         # generate data
         semester_data = ["sem1", "sem2", "sem3"]
         for sem_name in semester_data:
-            sem = TimeTracker.Semester(name=sem_name)
+            sem = model.Semester(name=sem_name)
             study.add_semester(sem)
 
         # test if semesters can be found
@@ -622,14 +622,14 @@ class UnitTestStudy(unittest.TestCase):
 
     def test_get_modules(self):
         '''test if all used modules are returned'''
-        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        study = model.Study(180, 30, datetime.datetime.now())
 
         # generate data
         ref_lst = []
         ref_lst2 = []
         sem_data = ["sem1", "sem11", "sem2"]
         for sem_name in sem_data:
-            sem = TimeTracker.Semester(name=sem_name)
+            sem = model.Semester(name=sem_name)
             m,_=sem.add_entry(moduleName="mod_"+sem_name, category="")
             study.add_semester(sem)
             ref_lst.append(m)
@@ -650,7 +650,7 @@ class UnitTestStudy(unittest.TestCase):
 
     def test_get_categories(self):
         '''test if all used modules are returned'''
-        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        study = model.Study(180, 30, datetime.datetime.now())
 
         # generate data
         sem_data = ["sem1", "sem11", "sem2"]
@@ -693,7 +693,7 @@ class UnitTestStudy(unittest.TestCase):
         
     def test_set_last_information(self):
         '''test if setting the last information works'''
-        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        study = model.Study(180, 30, datetime.datetime.now())
         
         sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
         with self.assertRaises(TypeError):
@@ -712,7 +712,7 @@ class UnitTestStudy(unittest.TestCase):
     
     def test_get_last_information(self):
         '''test if reading the last information works'''
-        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        study = model.Study(180, 30, datetime.datetime.now())
         
         sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
         with self.assertRaises(AttributeError):
@@ -724,107 +724,3 @@ class UnitTestStudy(unittest.TestCase):
         self.assertEqual(sem, s, "last semester was not set correctly") 
         self.assertEqual(mod, m, "last module was not set correctly")
         self.assertEqual(entry, e, "last entry was not set correctly")  
-
-
-
-class TimeTrackerUnitTest(unittest.TestCase):
-    def setUp(self):
-        self.study = TimeTracker.Study(ECTS=180,hoursPerECTS=30,plannedEnd=datetime.datetime.now())
-    
-    def test_init(self):
-        '''test the constructor of TimeTracker'''
-        # wrong arguments
-        with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker()
-        with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker(ECTS=180)
-        with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker(hoursPerECTS=30)
-        with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker(
-                plannedEnd=datetime.datetime.now())
-
-    def test_start_tracking(self):
-        '''test the start tracking function'''
-        timeTracker = TimeTracker.TimeTracker(self.study)
-
-        # wrong arguments
-        with self.assertRaises(TypeError):
-            timeTracker.start_tracking()
-        with self.assertRaises(TypeError):
-            timeTracker.start_tracking(semesterName="sem")
-        with self.assertRaises(TypeError):
-            timeTracker.start_tracking(semesterName="sem", moduleName="mod")
-
-        self.assertIsNone(timeTracker.current_entry, "Current entry was set\
-                          althoug start_tracking failed")
-
-        # test starting an entry
-        timeTracker.start_tracking(semesterName="sem", moduleName="mod",
-                                   category="cat")
-
-        self.assertIsNotNone(timeTracker.current_entry, "Current entry is None\
-                             although tracking was started successfully")
-
-        sem = timeTracker._study.get_semester("sem")
-        mod = sem.get_module("mod")
-
-        self.assertEqual(first=timeTracker.current_entry, second=mod.entries[0],
-                         msg="Entry which was started is not current entry")
-
-    def test_stop_tracking(self):
-        '''test stopping the tracking'''
-        timeTracker = TimeTracker.TimeTracker(self.study)
-
-        # stop not running tracking
-        with self.assertRaises(RuntimeError):
-            timeTracker.stop_tracking()
-
-        # stop a running entry
-        timeTracker.start_tracking(semesterName="sem", moduleName="mod",
-                                   category="cat")
-
-        timeTracker.stop_tracking()
-
-        self.assertIsNone(timeTracker.current_entry, "Current entry was not\
-                          reset after stopping the tracking")
-
-        ref_stop = datetime.datetime.now()
-        sem = timeTracker._study.get_semester("sem")
-        mod = sem.get_module("mod")
-        stop = mod.entries[0].stop_time
-
-        self.assertEqual(first=ref_stop, second=stop,
-                         msg="Stop time of currently stopped entra is not\
-                            datetime.now()")
-
-    def test_timer_updates_status(self):
-        '''test if the observer is called correctly'''
-        timeTracker = TimeTracker.TimeTracker(self.study)
-
-        updates = []
-
-        def mock_status_change(elapsed):
-            updates.append(elapsed)
-        
-        timeTracker.on_status_change = mock_status_change
-
-        timeTracker.toggle_tracking("Sem","Mod","Cat","")
-        sleep(2.5)
-        timeTracker.toggle_tracking("Sem","Mod","Cat","")
-        sleep(2)
-
-        # start, 2 updates, stop
-        self.assertEqual(len(updates), 4, "observer was not called 3 times within 3 seconds")
-
-        for i in range(len(updates)):
-            self.assertIsInstance(updates[i], datetime.timedelta, "observer did not pass correct datatype as parameter")
-            if(i < len(updates) - 1):
-                self.assertEqual(updates[i].seconds, i)
-            else:
-                self.assertEqual(updates[i].seconds, 0)
-            
-
-
-if __name__ == '__main__':
-    unittest.main()
