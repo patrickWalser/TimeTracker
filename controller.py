@@ -1,7 +1,8 @@
 import datetime
 import threading
 import uuid
-from model import Semester, Module, Entry
+from model import Study, Semester, Module, Entry
+from charts import ChartFactory, ChartType
 
 class TimeTracker:
     '''Main of the TimeTracker
@@ -233,3 +234,86 @@ class TimeTracker:
             m.stop = edit_module_stop
         
         self.remove_entry(semester, module, entry)
+
+    def generate_chart(self, scope, chart_type=ChartType.PIE):
+        '''generates a chart
+
+        scope: the data (study, Semester, Module) which will be printed
+        chart_type: the type of the chart
+
+        returns: the chart
+        '''
+
+        data = self._get_chart_data(scope, chart_type)
+        chart = ChartFactory.create_chart(chart_type, data)
+        return chart
+
+    def _get_chart_data(self, scope, chart_tpe=ChartType.PIE):
+        '''gets the data for a chart
+
+        scope: the data (study, Semester, Module) which will be printed
+        chart_tpe: the type of the chart
+
+        returns: the data for the chart
+        '''
+
+        if chart_tpe == ChartType.PIE:
+            return self._get_pie_chart_data(scope)
+        elif chart_tpe == ChartType.BURNDOWN:
+            return self._get_burndown_chart_data(scope)
+    
+    def _get_pie_chart_data(self, scope):
+        '''gets the data for a pie chart
+        
+        scope: the data (study, Semester, Module) which will be printed
+
+        returns: the names and values for the chart
+        '''
+
+        durations, _ = scope.get_durations()
+        names = [dur.get('Name')for dur in durations]
+        values = [dur.get('Duration').total_seconds() for dur in durations]
+        return names, values
+
+    def _get_burndown_chart_data(self, scope):
+        '''gets the data for a burndown chart
+
+        scope: the data (study, Semester, Module) which will be printed
+
+        returns: the stop times, values, total work and planned end
+        '''
+
+        if isinstance(scope, Study):
+            total_work = scope.ECTS
+            planned_end = scope.plannedEnd
+            modules = [mod for sem in scope.semesters for mod in sem.modules]
+        elif isinstance(scope, Semester):
+            total_work = scope.ECTS if scope.ECTS != 0 else sum(mod.ECTS for mod in scope.modules)
+            planned_end = scope.plannedEnd if scope.plannedEnd else 0
+            modules = scope.modules
+        elif isinstance(scope, Module):
+            return
+
+        start = []
+        end = []
+        stop_times_values = []
+
+        for mod in modules:
+            start.append(mod.start)
+            end.append(mod.plannedEnd)
+            if mod.stop is not None:
+                stop_times_values.append((mod.stop, mod.ECTS))
+
+        if planned_end == 0:
+            planned_end = max(end)
+
+        start.sort()
+        stop_times_values.append((start[0], 0))
+
+        # Sort the list of tuples
+        stop_times_values.sort()
+
+        # Extract the sorted stop_times and values
+        stop_times, values = zip(*stop_times_values)
+
+        return stop_times, values, total_work, planned_end

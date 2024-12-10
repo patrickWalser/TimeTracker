@@ -566,69 +566,7 @@ class TimeTrackerGUI:
             self.chart.destroy()
 
         # create data depending on the chart type
-        if self.active_chart == ChartType.BURNDOWN:
-            stopTimes = []
-            values = []
-            start = []
-            total_work = 0
-            planned_end = 0
-            end = []
-            if isinstance(scope, Study):
-                total_work = scope.ECTS
-                for sem in scope.semesters:
-                    for mod in sem.modules:
-                        start.append(mod.start)
-                        end.append(mod.plannedEnd)
-                        if mod.stop != None:
-                            stopTimes.append(mod.stop)
-                            values.append(mod.ECTS)
-
-                # write the end if it is specified for the study
-                planned_end = scope.plannedEnd
-            elif isinstance(scope, Semester):
-                # Only Modules which are already tracked are respected in the
-                # diagram
-                for mod in scope.modules:
-                    start.append(mod.start)
-                    end.append(mod.plannedEnd)
-                    total_work += mod.ECTS
-                    if mod.stop != None:
-                        stopTimes.append(mod.stop)
-                        values.append(mod.ECTS)
-
-                # set data for ideal line if data is valid
-                if scope.ECTS != 0:
-                    total_work = scope.ECTS
-
-                if scope.plannedEnd != None:
-                    planned_end = scope.plannedEnd
-
-            elif isinstance(scope, Module):
-                pass    # TODO: return? this throws exception
-
-            # get the latest planned end of a subitem if planned end is not set
-            if planned_end == 0:
-                end.sort(reverse=True)
-                planned_end = end[0]
-
-            # get the first start of a module
-            start.sort()
-            stopTimes.append(start[0])
-            values.append(0)
-
-            # sort the values
-            sortedList = sorted(zip(stopTimes, values))
-
-            a = [x for x, _ in sortedList]
-            b = [x for _, x in sortedList]
-            self.chart = ChartFactory.create_chart(
-                self.active_chart, a, b, total_work, planned_end)
-        else:
-            durations, _ = scope.get_durations()
-            names = [dur.get('Name')for dur in durations]
-            values = [dur.get('Duration').total_seconds() for dur in durations]
-            self.chart = ChartFactory.create_chart(
-                self.active_chart, names, values)
+        self.chart = self.tracker.generate_chart(scope, self.active_chart)
         self.chart.plot(self.plot_frame)
 
     def save_data(self, filename=None):  # TODO: save in correct format

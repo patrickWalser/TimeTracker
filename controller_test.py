@@ -233,6 +233,96 @@ class TimeTrackerUnitTest(unittest.TestCase):
         self.assertEqual(new_entry.stop_time, edit_stop_time)
         self.assertEqual(new_module.stop, edit_module_stop)
 
+    def test_get_burndown_chart_data_study(self):
+        '''test the _get_burndown_chart_data method for Study scope'''
+        timeTracker = controller.TimeTracker(self.study)
+        self.study.plannedEnd = datetime.datetime(2024, 12, 31)
+        
+        # Create mock data
+        semester1 = model.Semester(name="sem1", ECTS=10, plannedEnd=datetime.datetime(2023, 12, 31))
+        semester2 = model.Semester(name="sem2", ECTS=10, plannedEnd=datetime.datetime(2024, 12, 31))
+
+        module1 = model.Module(name="mod1", ECTS=5)
+        module1.start = datetime.datetime(2023, 1, 1)
+        module1.plannedEnd = datetime.datetime(2023, 6, 30)
+        module1.stop = datetime.datetime(2023, 6, 30)
+
+        module2 = model.Module(name="mod2", ECTS=5)
+        module2.start=datetime.datetime(2023, 7, 1)
+        module2.plannedEnd=datetime.datetime(2023, 12, 31)
+        module2.stop=datetime.datetime(2023, 12, 31)
+
+        module3 = model.Module(name="mod3", ECTS=5)
+        module3.start=datetime.datetime(2024, 1, 1)
+        module3.plannedEnd=datetime.datetime(2024, 6, 30)
+        module3.stop=datetime.datetime(2024, 6, 30)
+
+        module4 = model.Module(name="mod4", ECTS=5)
+        module4.start=datetime.datetime(2024, 7, 1)
+        module4.plannedEnd=datetime.datetime(2024, 12, 31)
+        module4.stop=datetime.datetime(2024, 12, 31)
+        
+        semester1.modules.extend([module1, module2])
+        semester2.modules.extend([module3, module4])
+        self.study.semesters.extend([semester1, semester2])
+        
+        # Get burndown chart data
+        stop_times, values, total_work, planned_end = timeTracker._get_burndown_chart_data(self.study)
+        
+        # Assertions
+        self.assertEqual(total_work, 180)
+        self.assertEqual(planned_end, datetime.datetime(2024, 12, 31))
+        self.assertEqual(stop_times, (datetime.datetime(2023, 1, 1), datetime.datetime(2023, 6, 30), datetime.datetime(2023, 12, 31), datetime.datetime(2024, 6, 30), datetime.datetime(2024, 12, 31)))
+        self.assertEqual(values, (0, 5, 5, 5, 5))
+
+    def test_get_burndown_chart_data_semester(self):
+        '''test the _get_burndown_chart_data method for Semester scope'''
+        timeTracker = controller.TimeTracker(self.study)
+        
+        # Create mock data
+        semester = model.Semester(name="sem", ECTS=10, plannedEnd=datetime.datetime(2023, 12, 31))
+        
+        module1 = model.Module(name="mod1", ECTS=5)
+        module1.start=datetime.datetime(2023, 1, 1)
+        module1.plannedEnd=datetime.datetime(2023, 6, 30)
+        module1.stop=datetime.datetime(2023, 6, 30)
+
+        module2 = model.Module(name="mod2", ECTS=5) 
+        module2.start=datetime.datetime(2023, 7, 1)
+        module2.plannedEnd=datetime.datetime(2023, 12, 31)
+        module2.stop=datetime.datetime(2023, 12, 31)
+        
+        semester.modules.extend([module1, module2])
+        self.study.semesters.append(semester)
+        
+        # Get burndown chart data
+        stop_times, values, total_work, planned_end = timeTracker._get_burndown_chart_data(semester)
+        
+        # Assertions
+        self.assertEqual(total_work, 10)
+        self.assertEqual(planned_end, datetime.datetime(2023, 12, 31))
+        self.assertEqual(stop_times, (datetime.datetime(2023, 1, 1), datetime.datetime(2023, 6, 30), datetime.datetime(2023, 12, 31)))
+        self.assertEqual(values, (0, 5, 5))
+
+    def test_get_burndown_chart_data_module(self):
+        '''test the _get_burndown_chart_data method for Module scope'''
+        timeTracker = controller.TimeTracker(self.study)
+        
+        # Create mock data
+        semester = model.Semester(name="sem", ECTS=10, plannedEnd=datetime.datetime(2023, 12, 31))
+        module = model.Module(name="mod", ECTS=5)
+        module.start=datetime.datetime(2023, 1, 1)
+        module.plannedEnd=datetime.datetime(2023, 6, 30)
+        module.stop=datetime.datetime(2023, 6, 30)
+        
+        semester.modules.append(module)
+        self.study.semesters.append(semester)
+        
+        # Get burndown chart data
+        result = timeTracker._get_burndown_chart_data(module)
+        
+        # Assertions
+        self.assertIsNone(result)
 
 if __name__ == '__main__':
     unittest.main()
