@@ -61,8 +61,6 @@ class DateTimeFrame(Frame):
         return datetime.datetime(year=date.year, month=date.month, day=date.day, hour=h, minute=m)
 
 
-SETTINGS_FILE = 'settings.json'
-
 # TODO: add menu to set end, study name?, create new study, save as,...
 
 
@@ -578,12 +576,7 @@ class TimeTrackerGUI:
 
         filename: the file where to save the timetracker
         '''
-        if filename is None:
-            filename = "time_tracking_data.json"
-        with open(filename, "wb") as file:
-            pickle.dump(self.tracker._study, file, pickle.HIGHEST_PROTOCOL)
-        self.settings['last_used_file'] = filename
-        self.save_settings(self.settings)
+        self.tracker.export_to_json(filename)
 
     def load_data(self, filename=None):
         '''Loads a previous saved timetracker.
@@ -595,52 +588,15 @@ class TimeTrackerGUI:
 
         filename: the Filename
         '''
-        # no filename given search settings file
-        if filename is None:
-            self.settings = self.load_settings()
-            filename = self.settings.get('last_used_file')
-            if filename is None:    # no existing settings file start new tracker
-                self.new_tracker()
-                return
         try:
-            with open(filename, "rb") as file:
-                self.tracker._study = pickle.load(file)
-                '''
-                sem,mod,entry = self.tracker.get_initial_entry()
-                if(sem):
-                    self.semester_var.set(sem.name)
-                if(mod):
-                    self.module_var.set(mod.name)
-                if(entry):
-                    self.category_var.set(entry.category)
-                    self.comment_var.set(entry.comment)
-
-                self.chart_scope = self.tracker._study
-                '''
-        except FileNotFoundError:
-            self.new_tracker()
-            pass
+            self.tracker.import_from_json(filename)
         except Exception as e:
             messagebox.showerror("Error", f"Error while loading data: {e}")
-
-    def save_settings(self, settings):
-        '''saves the settings (last used file) to the SETTINGS_FILE path'''
-        with open(SETTINGS_FILE, 'w') as file:
-            json.dump(settings, file)
-
-    def load_settings(self):
-        '''loads the settings (last used file) from thee SETTINGS_FILE path'''
-        try:
-            with open(SETTINGS_FILE, 'r') as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {}
 
     def on_close(self):
         '''callback function for application shutdown
 
         saves the data to the last used filename
         '''
-        filename = self.settings.get('last_used_file')
-        self.save_data(filename)
+        self.save_data()
         self.root.destroy()

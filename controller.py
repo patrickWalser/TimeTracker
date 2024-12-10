@@ -1,8 +1,11 @@
+import os
 import datetime
 import threading
 import uuid
+import json
 from model import Study, Semester, Module, Entry
 from charts import ChartFactory, ChartType
+from settings import Settings
 
 class TimeTracker:
     '''Main of the TimeTracker
@@ -23,6 +26,7 @@ class TimeTracker:
         self.on_status_change = None
         self._timer = None
         self.on_treeview_update = None
+        self.settings = Settings()
 
     def start_tracking(self, semesterName, moduleName, category, comment=""):
         '''starts the tracking.
@@ -317,3 +321,31 @@ class TimeTracker:
         stop_times, values = zip(*stop_times_values)
 
         return stop_times, values, total_work, planned_end
+    
+    def export_to_json(self, filename):
+        '''exports the study to a json file
+
+        sets the last filename
+        filename: the name of the file
+        '''
+        with open(filename, 'w') as file:
+            json.dump(self._study.to_json(), file, indent=4)
+        self.settings.set("last_filename", filename)
+        print(f"Data was successfully written to {filename}.")
+
+    def import_from_json(self, filename):
+        '''imports the study from a json file
+
+        uses the last filename if no filename is given
+        filename: the name of the file
+        '''
+        if filename is None:
+            filename = self.settings.get("last_filename")
+        if filename and os.path.exists(filename):
+            with open(filename, 'r') as file:
+                data = json.load(file)
+            self._study = Study.from_json(data)
+            self.settings.set("last_filename", filename)
+            print(f"Data was successfully read from {filename}.")
+        else:
+            raise FileNotFoundError(f"File {filename} not found.")

@@ -3,6 +3,9 @@ import model
 import datetime
 import controller
 from time import sleep
+import tempfile
+import os
+import json
 
 
 class TimeTrackerUnitTest(unittest.TestCase):
@@ -323,6 +326,52 @@ class TimeTrackerUnitTest(unittest.TestCase):
         
         # Assertions
         self.assertIsNone(result)
+
+    def test_export_to_json(self):
+        '''test the export_to_json method'''
+        timeTracker = controller.TimeTracker(self.study)
+        
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_filename = temp_file.name
+        
+        # Export data to JSON
+        timeTracker.export_to_json(temp_filename)
+        
+        # Check if file exists
+        self.assertTrue(os.path.exists(temp_filename))
+        
+        # Read the file and check its content
+        with open(temp_filename, 'r') as file:
+            data = json.load(file)
+        
+        self.assertIn('ECTS', data)
+        self.assertIn('hoursPerECTS', data)
+        
+        # Clean up
+        os.remove(temp_filename)
+
+    def test_import_from_json(self):
+        '''test the import_from_json method'''
+        timeTracker = controller.TimeTracker(self.study)
+        
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_filename = temp_file.name
+        
+        # Export data to JSON
+        timeTracker.export_to_json(temp_filename)
+        
+        # Create a new TimeTracker instance and import data
+        new_timeTracker = controller.TimeTracker(model.Study(ECTS=0, hoursPerECTS=0, plannedEnd=datetime.datetime.now()))
+        new_timeTracker.import_from_json(temp_filename)
+        
+        # Check if the data was imported correctly
+        self.assertEqual(new_timeTracker._study.ECTS, self.study.ECTS)
+        self.assertEqual(new_timeTracker._study.hoursPerECTS, self.study.hoursPerECTS)
+        
+        # Clean up
+        os.remove(temp_filename)
 
 if __name__ == '__main__':
     unittest.main()
