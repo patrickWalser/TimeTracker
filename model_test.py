@@ -724,3 +724,6 @@ class UnitTestStudy(unittest.TestCase):
         self.assertEqual(sem, s, "last semester was not set correctly") 
         self.assertEqual(mod, m, "last module was not set correctly")
         self.assertEqual(entry, e, "last entry was not set correctly")  
+
+if __name__ == '__main__':
+    unittest.main()

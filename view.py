@@ -343,31 +343,12 @@ class TimeTrackerGUI:
 
     def btn_finish_click(self):
         ''' finishes the module'''
-        sem = self.tracker._study.get_semester(self.semester_var.get())
-        mod = sem.get_module(self.module_var.get())
-        mod.finish_module()
+        self.tracker.finish_module(self.semester_var.get(), self.module_var.get())
 
     def update_tracking_label(self, elapsed):
         '''update the current duration label'''
         if elapsed:
             self.current_duration_label.configure(text="Tracking for "+str(elapsed).split('.')[0])
-        
-    def update_label(self):
-        '''update the current duration label
-
-        is called every second
-        '''
-        # if tracking is running
-        if self.is_tracking:
-            duration = str(self.tracker.current_entry.get_duration()
-                           ).split('.')[0]  # remove micros
-            cat = self.tracker.current_entry.category
-            mod = self.tracker.current_module.name
-            self.current_duration_label.configure(
-                text=f"Tracking: {cat} in module {mod} for {duration}")
-
-            # call this method after one second
-            self.root.after(1000, self.update_label)
 
     def update_combo_semesters(self):
         '''updates the values of the semester combobox'''
@@ -486,60 +467,25 @@ class TimeTrackerGUI:
             self.module_end.set_datetime(mod.stop)
 
         add_btn = tk.Button(edit_window, text="Save as new entry",
-                            command=lambda s=sem, m=mod, e=entry: self.add_new_entry())
+                            command=lambda: 
+                            self.tracker.add_new_entry(
+                                self.sem_var.get(), self.mod_var.get(), 
+                                self.cat_var.get(), self.comment_var.get(), 
+                                self.start_time.get_datetime(), self.stop_time.get_datetime()))
         add_btn.grid(row=5, column=0, sticky='news')
         edit_btn = tk.Button(edit_window, text='Save entry',
-                             command=lambda s=sem, m=mod, e=entry: self.edit(s, m, e))
+                             command=lambda s=sem, m=mod, e=entry: 
+                             self.tracker.edit_entry(
+                                 s, m, e, self.sem_var.get(), 
+                                self.mod_var.get(), self.cat_var.get(), 
+                                self.comment_var.get(), self.start_time.get_datetime(), 
+                                self.stop_time.get_datetime(), 
+                                self.module_end.get_datetime() if mod.stop != None else None))
         edit_btn.grid(row=5, column=1, sticky='news')
         remove_btn = tk.Button(edit_window, text='Delete entry',
-                               command=lambda s=sem, m=mod, e=entry: self.remove(s, m, e))
+                               command=lambda s=sem, m=mod, e=entry: 
+                               self.tracker.remove_entry(s, m, e))
         remove_btn.grid(row=5, column=2, sticky='news')
-
-    def remove(self, sem, mod, entry):
-        '''remove an entry
-
-        sem: the semester
-        mod: the module
-        entry: the entry
-        '''
-        self.tracker._study.remove_entry(sem, mod, entry)
-        self.update_treeview()
-
-    def add_new_entry(self):
-        ''' add a new entry
-
-        the values of the user controls are read
-
-        returns the semester, module and entry
-        '''
-        semName = self.sem_var.get()
-        modName = self.mod_var.get()
-        catName = self.cat_var.get()
-        comment = self.comment_var.get()
-        s, m, e = self.tracker._study.add_entry(
-            semName, modName, catName, comment)
-        e.start_time = self.start_time.get_datetime()
-        e.stop_time = self.stop_time.get_datetime()
-        self.update_treeview()
-        return s, m, e
-
-    def edit(self, sem, mod, entry):
-        ''' edit an entry
-
-        the entry is deleted and a new one is created
-
-        sem: the semester
-        mod: the module
-        entry: the entry
-        '''
-        # add a new entry
-        s, m, e = self.add_new_entry()
-        m.start = self.module_start.get_datetime()
-        if mod.stop != None:
-            m.stop = self.module_end.get_datetime()
-
-        # remove the old entry
-        self.remove(sem, mod, entry)
 
  # TODO: testing
     def generate_accordion(self, parent):

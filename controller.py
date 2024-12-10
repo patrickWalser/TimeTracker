@@ -168,4 +168,68 @@ class TimeTracker:
     def get_category_names(self, semName, modName):
         '''get all category names of a module'''
         return self._study.get_categories(semName, modName)
+    
+    def finish_module(self, semester_name, module_name):
+        '''finishes a module
+        
+        semester_name: name of the semester
+        module_name: name of the module
+        '''
+        sem = self.get_semester(semester_name)
+        mod = sem.get_module(module_name)
+        mod.finish_module()
+        if self.on_treeview_update:
+            self.on_treeview_update()
 
+    def add_new_entry(self, semester_name, module_name, category, comment, start_time, stop_time):
+        '''adds a new entry
+        
+        semester_name: name of the semester
+        module_name: name of the module
+        category: the category
+        comment: an optional comment
+        start_time: the start time of the entry
+        stop_time: the stop time of the entry
+        '''
+        sem, mod, entry = self._study.add_entry(semester_name, module_name, category, comment)
+        entry.start_time = start_time
+        entry.stop_time = stop_time
+        
+        if self.on_treeview_update:
+            self.on_treeview_update()
+        return sem, mod, entry
+
+    def remove_entry(self, semester, module, entry):
+        '''removes an entry
+        
+        removes also the semester or the module if they have no entries left
+
+        semester: the semester of the entry
+        module: the module of the entry
+        entry: the entry to remove'''
+        self._study.remove_entry(semester, module, entry)
+
+        if self.on_treeview_update:
+            self.on_treeview_update()
+
+    def edit_entry(self, semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_stop):
+        '''edits an entry
+        
+        removes the old entry and adds a new one with the new information
+
+        semester: the semester of the entry
+        module: the module of the entry
+        entry: the entry to edit
+        edit_semester_name: the new semester name
+        edit_module_name: the new module name
+        edit_category: the new category
+        edit_comment: the new comment
+        edit_start_time: the new start time
+        edit_stop_time: the new stop time
+        edit_module_stop: the new module stop time
+        '''
+        s,m,e = self.add_new_entry(edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time)
+        if edit_module_stop is not None:
+            m.stop = edit_module_stop
+        
+        self.remove_entry(semester, module, entry)
