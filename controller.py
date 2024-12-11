@@ -328,6 +328,8 @@ class TimeTracker:
         sets the last filename
         filename: the name of the file
         '''
+        if filename is None:
+            filename = self.settings.get("last_filename")
         with open(filename, 'w') as file:
             json.dump(self._study.to_json(), file, indent=4)
         self.settings.set("last_filename", filename)
