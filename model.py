@@ -179,6 +179,7 @@ class Module:
             "name": self.name,
             "ECTS": self.ECTS,
             "start": self.start.isoformat() if self.start else None,
+            "stop": self.stop.isoformat() if self.stop else None,
             "plannedEnd": self.plannedEnd.isoformat() if self.plannedEnd else None,
             "entries": [entry.to_json() for entry in self.entries]
         }
@@ -192,6 +193,7 @@ class Module:
         module.entries = [Entry.from_json(entry) for entry in data["entries"]]
         module.id=data["id"]
         module.start=datetime.datetime.fromisoformat(data["start"]) if data["start"] else None
+        module.stop=datetime.datetime.fromisoformat(data["stop"]) if data["stop"] else None
         module.plannedEnd=datetime.datetime.fromisoformat(data["plannedEnd"]) if data["plannedEnd"] else None
         return module
 

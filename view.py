@@ -515,7 +515,7 @@ class TimeTrackerGUI:
                                  s, m, e, self.sem_var.get(), 
                                 self.mod_var.get(), self.cat_var.get(), 
                                 self.comment_var.get(), self.start_time.get_datetime(), 
-                                self.stop_time.get_datetime(), 
+                                self.stop_time.get_datetime(), self.module_start.get_datetime(), 
                                 self.module_end.get_datetime() if mod.stop != None else None))
         edit_btn.grid(row=5, column=1, sticky='news')
         remove_btn = tk.Button(edit_window, text='Delete entry',

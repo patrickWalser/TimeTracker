@@ -168,7 +168,7 @@ class TimeTracker:
     
     def get_module_names(self, semName):
         '''get all module names of a semester'''
-        return self.get_modules(semName)
+        return [m.name for m in self.get_modules(semName)]
 
     def get_category_names(self, semName, modName):
         '''get all category names of a module'''
@@ -217,7 +217,7 @@ class TimeTracker:
         if self.on_treeview_update:
             self.on_treeview_update()
 
-    def edit_entry(self, semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_stop):
+    def edit_entry(self, semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_start, edit_module_stop):
         '''edits an entry
         
         removes the old entry and adds a new one with the new information
@@ -234,6 +234,7 @@ class TimeTracker:
         edit_module_stop: the new module stop time
         '''
         s,m,e = self.add_new_entry(edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time)
+        m.start = edit_module_start
         if edit_module_stop is not None:
             m.stop = edit_module_stop
         
