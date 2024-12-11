@@ -628,6 +628,9 @@ class TimeTrackerGUI:
         '''
         try:
             self.tracker.import_from_json(filename)
+        except FileNotFoundError as e:
+            messagebox.showinfo("Info", "No file found. Starting with new study")
+            self.new_study(edit=False)
         except Exception as e:
             messagebox.showerror("Error", f"Error while loading data: {e}")
 
