@@ -130,16 +130,16 @@ class TimeTracker:
 
         # filter by selected semester
         for semester in self._study.semesters:
-            if selected_semester and semester.name != selected_semester:
+            if selected_semester and not semester.name.startswith(selected_semester):
                 continue  # skip if semester names dont match
 
             # filter by selected module
             for module in semester.modules:
-                if selected_module and module.name != selected_module:
+                if selected_module and not module.name.startswith(selected_module):
                     continue  # skip if module names dont match
 
                 for entry in module.entries:
-                    if selected_category and entry.category != selected_category:
+                    if selected_category and not entry.category.startswith(selected_category):
                         continue # skip if categories dont match
 
                     filtered_data.append({"semester":semester, "module":module, "entry":entry})
