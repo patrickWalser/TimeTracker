@@ -80,30 +80,55 @@ class TimeTrackerGUI:
         self.root.geometry('880x600')
         self.tracker = tracker
 
+        self.setup_menu()
+        self.setup_views()
+       
+        # TODO: analyse_btn print chart is this correct or should load_data be called first?
+
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        self.root.after(0, self.initial_load)
+
+        self.chart = None
+        self.setup_observers()
+
+    def setup_menu(self):
+        '''setup the menu
+
+        creates the file menu for opening, saving, etc.
+        '''
         # file menu for opening, saving, etc.
-        menu = Menu(root)
-        root.config(menu=menu)
+        menu = Menu(self.root)
+        self.root.config(menu=menu)
         filemenu = Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New", command=lambda: self.new_tracker(edit=False))
+        filemenu.add_command(label="New", command=lambda: self.new_study(edit=False))
         filemenu.add_command(label="Open", command=lambda: self.open_tracker())
         filemenu.add_command(label="Save as", command=lambda: self.save_as())
+        editmenu = Menu(menu)
+        menu.add_cascade(label="Edit", menu=editmenu)
+        editmenu.add_command(label="Edit Study", command=lambda: self.new_study(edit=True))
+        editmenu.add_command(label="Edit Semesters", command=lambda: self.edit_semesters())
+
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(
             label="About", command=lambda: print("about clicked"))
 
+    def setup_views(self):
+        '''setup the views
+
+        creates the UI elements for the tracker and analyse view 
+        and the necessary buttons to switch between them
+        '''
         # separate window into frames using grid
-        header_view = Frame(root)
+        header_view = Frame(self.root)
         header_view.grid(row=0, column=0, sticky='news', padx=20, pady=10)
 
         # two different frames to switch between views
-        tracker_view = Frame(root)
+        tracker_view = Frame(self.root)
         tracker_view.grid(row=1, sticky='news', padx=20, pady=5)
-        analyse_view = Frame(root)
+        analyse_view = Frame(self.root)
         analyse_view.grid(row=1, sticky='news', padx=20, pady=5)
-        # analyse_view.rowconfigure(1,weight=1)
-        # analyse_view.columnconfigure(1,weight=1)
         tracker_view.tkraise()
 
         # Buttons to switch between the two views
@@ -117,9 +142,17 @@ class TimeTrackerGUI:
             command=lambda: [analyse_view.tkraise(),
                              self.generate_accordion(analyse_view),
                              self.print_chart(self.tracker._study)]).grid(row=0, column=1)
-        # TODO: analyse_btn print chart is this correct or should load_data be called first?
+        
+        self.setup_tracker_view(tracker_view)
+        self.setup_analyze_view(analyse_view)
 
-        # Tracker View
+    def setup_tracker_view(self, tracker_view):
+        '''setup the tracker view
+
+        creates the UI elements for the tracker view
+
+        tracker_view: the frame where the tracker view is placed
+        '''
         self.semester_label = tk.Label(
             tracker_view, text="Semester: ").grid(row=0, column=0)
         self.semester_var = tk.StringVar()
@@ -155,8 +188,6 @@ class TimeTrackerGUI:
         self.comment_var = tk.StringVar()
         self.comment_entry = tk.Entry(
             tracker_view, width=20, textvariable=self.comment_var).grid(row=0, column=7)
-        # self.comment_txt = tk.Text(
-        #    tracker_view, height=1, width=20).grid(row=0, column=7)
 
         self.is_tracking = False
         self.start_stop_btn = tk.Button(
@@ -200,11 +231,16 @@ class TimeTrackerGUI:
         self.yscroll.pack(side='right', fill='y')
 
         self.treeview_frame.grid(row=2, columnspan=8, sticky='news')
+    
+    def setup_analyze_view(self, analyze_view):
+        '''setup the analyze view
 
-        # Analyse View
-        # TODO:
+        creates the UI elements for the analyze view
+
+        analyze_view: the frame where the analyze view is placed
+        '''
         self.accordion = None
-        self.chart_frame = tk.Frame(analyse_view)
+        self.chart_frame = tk.Frame(analyze_view)
         self.chart_frame.grid(row=0, column=1, sticky='news')
         self.active_chart = ChartType.PIE
         chart_frame_header = tk.Frame(self.chart_frame)
@@ -218,16 +254,6 @@ class TimeTrackerGUI:
 
         self.plot_frame = tk.Frame(self.chart_frame)
         self.plot_frame.grid(row=1, sticky='news')
-        # self.plot_frame.rowconfigure(1,weight=1)
-        # self.plot_frame.columnconfigure(0, weight=1)
-
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.root.after(0, self.initial_load)
-
-        # TODO: updatechart  Scope when different tracker is loaded
-        # self.chart_scope = self.tracker.study
-        self.chart = None
-        self.setup_observers()
 
     def setup_observers(self):
         '''register observers'''
@@ -246,7 +272,7 @@ class TimeTrackerGUI:
         self.chart_scope = self.tracker._study
 
 # Commands for the filemenu
-    def new_tracker(self, edit):
+    def new_study(self, edit):
         '''opens a window to create a new tracker
         
         edit: if the existing tracker should be edited
@@ -254,7 +280,7 @@ class TimeTrackerGUI:
         # set name, planned end, num ECTS, hoursPerEcts
         # TODO: save the old tracker?
         new_window = tk.Toplevel(self.root)
-        new_window.title("New Tracker")
+        new_window.title("New Study")
         # force window to be in foreground
         new_window.grab_set()
         new_window.transient(self.root)
@@ -271,12 +297,13 @@ class TimeTrackerGUI:
         self.plannedEnd.grid(row=2, column=0)
 
         if edit:
-            self.ECTS_var.set(self.tracker._study.ECTS)
-            self.hoursPerECTS_var.set(self.tracker._study.hoursPerECTS)
-            self.plannedEnd.set_datetime(self.tracker._study.plannedEnd)
-            save_cmd = self.save_tracker
+            ects,hours,plannedEnd = self.tracker.get_study_parameters()
+            self.ECTS_var.set(ects)
+            self.hoursPerECTS_var.set(hours)
+            self.plannedEnd.set_datetime(plannedEnd)
+            save_cmd = self.save_study
         else:
-            save_cmd = self.save_new_tracker
+            save_cmd = self.save_new_study
 
         self.btn_new_tracker_save = tk.Button(
             new_window, text='save', command=lambda window=new_window: save_cmd(window)).grid(row=3, column=0)
@@ -285,25 +312,36 @@ class TimeTrackerGUI:
          #   new_window, text='abort', command=lambda: print("abort"))
 
 # TODO: call save_as after creating the tracker?
-    def save_new_tracker(self, window):
-        '''create the tracker and save it'''
-        self.tracker._study = Study(self.ECTS_var.get(), self.hoursPerECTS_var.get(),
-                                   self.plannedEnd.get_datetime())
-        self.chart_scope = self.tracker._study
+    def save_new_study(self, window):
+        '''create the study and save it
+        
+        destroys the window
+        
+        window: the window which is displayed
+        '''
+        self.chart_scope = self.tracker.create_new_study(
+            int(self.ECTS_var.get()), 
+            int(self.hoursPerECTS_var.get()), 
+            self.plannedEnd.get_datetime()
+        )
         window.destroy()
+
+        self.save_as()
     
-    def save_tracker(self, window):
-        '''save an edited tracker
+    def save_study(self, window):
+        '''save an edited study
         
         destroys the window
 
         window: the window which is displayed
         '''
-        self.tracker._study.ECTS = int(self.ECTS_var.get())
-        self.tracker._study.hoursPerECTS = int(self.hoursPerECTS_var.get())
-        self.tracker._study.plannedEnd = self.plannedEnd.get_datetime()
+        self.tracker.update_study(
+            int(self.ECTS_var.get()),
+            int(self.hoursPerECTS_var.get()),
+            self.plannedEnd.get_datetime()
+        )
 
-        self.chart_scope = self.tracker._study
+        # self.chart_scope = self.tracker._study
         window.destroy()
 
     def open_tracker(self):

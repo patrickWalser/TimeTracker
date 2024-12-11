@@ -322,6 +322,61 @@ class TimeTracker:
 
         return stop_times, values, total_work, planned_end
     
+    def update_study(self, ECTS, hoursPerECTS, plannedEnd):
+        '''updates the study
+
+        ECTS: the new ECTS
+        hoursPerECTS: the new hours per ECTS
+        plannedEnd: the new planned end
+        '''
+        self._study.ECTS = ECTS
+        self._study.hoursPerECTS = hoursPerECTS
+        self._study.plannedEnd = plannedEnd
+        if self.on_treeview_update:
+            self.on_treeview_update()
+
+    def create_new_study(self, ECTS, hoursPerECTS, plannedEnd):
+        '''creates a new study
+
+        ECTS: the new ECTS
+        hoursPerECTS: the new hours per ECTS
+        plannedEnd: the new planned end
+        '''
+        self._study = Study(ECTS, hoursPerECTS, plannedEnd)
+        if self.on_treeview_update:
+            self.on_treeview_update()
+        
+        return self._study
+    
+    def get_study_parameters(self):
+        '''gets the study parameters
+
+        returns: the ECTS, hours per ECTS and the planned end
+        '''
+        return self._study.ECTS, self._study.hoursPerECTS, self._study.plannedEnd
+    
+    def update_semester(self, semester_id, field, new_value):
+        semester = next((sem for sem in self.get_semesters() if sem.id == semester_id), None)
+        if semester:
+            if field == "ECTS":
+                try:
+                    semester.ECTS = int(new_value)
+                except ValueError:
+                    raise ValueError("Invalid ECTS value! Enter a positive integer.")
+            elif field == "plannedEnd":
+                formats = ["%Y-%m-%d", "%d.%m.%Y", "%Y/%m/%d", "%m/%d/%Y"]
+                for fmt in formats:
+                    try:
+                        semester.plannedEnd = datetime.datetime.strptime(new_value, fmt)
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    raise ValueError("Invalid date format! Enter the plannedEnd in one of the following formats: " + '; '.join(formats).replace('%',''))
+            return semester
+        else:
+            raise ValueError("Semester not found")
+    
     def export_to_json(self, filename):
         '''exports the study to a json file
 
