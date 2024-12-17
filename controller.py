@@ -250,7 +250,7 @@ class TimeTracker:
         '''
 
         data = self._get_chart_data(scope, chart_type)
-        chart = ChartFactory.create_chart(chart_type, data)
+        chart = ChartFactory.create_chart(chart_type, *data)
         return chart
 
     def _get_chart_data(self, scope, chart_tpe=ChartType.PIE):
