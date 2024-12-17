@@ -357,6 +357,130 @@ class TimeTrackerGUI:
         filename = tk.filedialog.asksaveasfilename(
             filetypes=data, defaultextension=data)
         self.save_data(filename)
+    def edit_semesters(self):
+        '''edit the semesters
+        
+        callback for the editmenu to set the number of ECTS and the planned end
+        of the semesters.
+        '''
+
+        new_window = tk.Toplevel(self.root)
+        new_window.title("Edit Semesters")
+        # force window to be in foreground
+        new_window.grab_set()
+        new_window.transient(self.root)
+
+        # create Treeview
+        self.edit_semester_tree = ttk.Treeview(new_window, columns=("Semester", "ECTS", "plannedEnd"), show="headings")
+        self.edit_semester_tree.heading("Semester", text="Semester")
+        self.edit_semester_tree.heading("ECTS", text="ECTS")
+        self.edit_semester_tree.heading("plannedEnd", text="plannedEnd")
+
+        # insert data
+        for sem in self.tracker.get_semesters():
+            try:
+                if sem.plannedEnd is None:
+                    sem.plannedEnd = datetime.datetime.now()
+            except:
+                sem.plannedEnd = datetime.datetime.now()
+
+            sem_serial = self.tracker.get_object_id(sem)
+
+            date = sem.plannedEnd.strftime('%Y-%m-%d')
+            self.edit_semester_tree.insert("", "end", values=(sem.name, sem.ECTS, date), tags=sem_serial)
+
+        self.edit_semester_tree.pack(fill=tk.BOTH, expand=True)
+
+        # bind doubleClick on cell
+        self.edit_semester_tree.bind("<Double-1>", lambda event, window = new_window : self.edit_semester_on_double_click(event, window))
+
+    def edit_semester_on_double_click(self, event, parent):
+        '''edit the semester on double click
+        
+        places an entry over the double clicked cell to edit the value
+        saves on return, focus out or window close
+
+        event: the event which was triggered
+        parent: the parent window
+        '''
+        # identify cell under doubleclick
+        itemID = self.edit_semester_tree.identify_row(event.y)
+        column = self.edit_semester_tree.identify_column(event.x)
+
+        item = self.edit_semester_tree.item(itemID)
+
+        # lay a tk.Entry over the double clicked cell
+        if item and column:
+            # get column index
+            col_index = int(column.replace("#", "")) - 1
+
+            # get current value
+            old_value = item["values"][col_index]
+
+            # get position for the entry
+            x, y, width, height = self.edit_semester_tree.bbox(itemID, column)
+
+            # create entry
+            self.double_click_entry = tk.Entry(parent)
+            self.double_click_entry.place(x=x, y=y, width=width, height=height)
+            self.double_click_entry.insert(0, old_value)
+            self.double_click_entry.focus()
+
+            # events to finish editing
+            self.double_click_entry.bind("<Return>", lambda event: self.edit_semester_save(item, itemID, col_index, parent))
+            self.double_click_entry.bind("<FocusOut>", lambda event: self.edit_semester_save(item, itemID, col_index, parent))
+            parent.protocol("WM_DELETE_WINDOW", lambda : self.edit_semester_save(item, itemID, col_index, parent))
+
+    def edit_semester_save(self, item, itemID, col_index, parent):
+        '''save the edited semester
+
+        validates the input and updates the treeview
+
+        item: the item which was edited
+        itemID: the id of the item
+        col_index: the index of the column which was edited
+        parent: the parent window
+        '''
+
+        new_value = self.double_click_entry.get()
+
+        # update values in treeview
+        values = list(item["values"])
+
+        if self.validate_value_change(item, col_index, new_value):
+            values[col_index] = new_value
+
+        self.edit_semester_tree.item(itemID, values=values)
+
+        self.double_click_entry.destroy()
+
+        # reset callback to default
+        parent.protocol("WM_DELETE_WINDOW", parent.destroy)
+
+    def validate_value_change(self, item, col_index, new_value):
+        '''validate the value change
+        
+        validates the new value and updates the semester
+        
+        item: the item which was edited
+        col_index: the index of the column which was edited
+        new_value: the new value
+        
+        returns True if the value is valid
+        '''
+        # deserialize the object
+        tags = item['tags']
+        sem = self.tracker.get_object_by_id(tags[0])
+
+        header = self.edit_semester_tree.heading(col_index)['text']
+        validFormat = False
+        try:
+            self.tracker.update_semester(sem, header, new_value)
+            validFormat = True
+        except ValueError as e:
+            messagebox.showerror("Error", f"Error while updating the value: {e}")
+        return validFormat
+
     def btn_start_stop_click(self):
         ''' start or stop the tracking
 
@@ -430,9 +554,9 @@ class TimeTrackerGUI:
             semester = item['semester']
             module = item['module']
             entry = item['entry']
-            tags = (self.tracker.serialize_object(semester), 
-                    self.tracker.serialize_object(module), 
-                    self.tracker.serialize_object(entry))
+            tags = (self.tracker.get_object_id(semester), 
+                    self.tracker.get_object_id(module), 
+                    self.tracker.get_object_id(entry))
             start_time = entry.start_time.strftime(
                 "%Y-%m-%d %H:%M:%S")
             duration = str(entry.get_duration()).split('.')[
@@ -452,9 +576,9 @@ class TimeTrackerGUI:
         selected = self.tree.focus()
         item = self.tree.item(selected)
         tags = item['tags']
-        sem = self.tracker.deserialize_object(tags[0])
-        mod = self.tracker.deserialize_object(tags[1])
-        entry = self.tracker.deserialize_object(tags[2])
+        sem = self.tracker.get_object_by_id(tags[0])
+        mod = self.tracker.get_object_by_id(tags[1], sem)
+        entry = self.tracker.get_object_by_id(tags[2], mod)
 
         self.open_edit_entry_dialog(sem, mod, entry)
         

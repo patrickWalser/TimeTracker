@@ -105,35 +105,35 @@ class TimeTrackerUnitTest(unittest.TestCase):
             else:
                 self.assertEqual(updates[i].seconds, 0)
 
-    def test_serialize_object(self):
-        '''test the serialize_object method'''
+    def test_get_object_id(self):
+        '''test the get_object_id method'''
         timeTracker = controller.TimeTracker(self.study)
         
         semester = model.Semester(name="sem")
         module = model.Module(name="mod")
         entry = model.Entry(category="cat", comment="com")
         
-        semester_id = timeTracker.serialize_object(semester)
-        module_id = timeTracker.serialize_object(module)
-        entry_id = timeTracker.serialize_object(entry)
+        semester_id = timeTracker.get_object_id(semester)
+        module_id = timeTracker.get_object_id(module)
+        entry_id = timeTracker.get_object_id(entry)
         
         self.assertTrue(semester_id.startswith("semester:"))
         self.assertTrue(module_id.startswith("module:"))
         self.assertTrue(entry_id.startswith("entry:"))
 
-    def test_deserialize_object(self):
-        '''test the deserialize_object method'''
+    def test_get_object_by_id(self):
+        '''test the get_object_by_id method'''
         timeTracker = controller.TimeTracker(self.study)
         
         semester, module, entry = timeTracker._study.add_entry("sem", "mod", "cat", "com")
         
-        semester_id = timeTracker.serialize_object(semester)
-        module_id = timeTracker.serialize_object(module)
-        entry_id = timeTracker.serialize_object(entry)
+        semester_id = timeTracker.get_object_id(semester)
+        module_id = timeTracker.get_object_id(module)
+        entry_id = timeTracker.get_object_id(entry)
         
-        deserialized_semester = timeTracker.deserialize_object(semester_id)
-        deserialized_module = timeTracker.deserialize_object(module_id)
-        deserialized_entry = timeTracker.deserialize_object(entry_id)
+        deserialized_semester = timeTracker.get_object_by_id(semester_id)
+        deserialized_module = timeTracker.get_object_by_id(module_id)
+        deserialized_entry = timeTracker.get_object_by_id(entry_id)
         
         self.assertEqual(semester, deserialized_semester)
         self.assertEqual(module, deserialized_module)
@@ -221,9 +221,10 @@ class TimeTrackerUnitTest(unittest.TestCase):
         edit_comment = "new_com"
         edit_start_time = datetime.datetime.now()
         edit_stop_time = datetime.datetime.now()
+        edit_module_start = datetime.datetime.now()
         edit_module_stop = datetime.datetime.now()
-        
-        timeTracker.edit_entry(semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_stop)
+
+        timeTracker.edit_entry(semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_start, edit_module_stop)
         
         self.assertEqual(len(module.entries), 0)
         new_semester = timeTracker.get_semester(edit_semester_name)
@@ -234,6 +235,7 @@ class TimeTrackerUnitTest(unittest.TestCase):
         self.assertEqual(new_entry.comment, edit_comment)
         self.assertEqual(new_entry.start_time, edit_start_time)
         self.assertEqual(new_entry.stop_time, edit_stop_time)
+        self.assertEqual(new_module.start, edit_module_start)
         self.assertEqual(new_module.stop, edit_module_stop)
 
     def test_get_burndown_chart_data_study(self):

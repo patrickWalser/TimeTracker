@@ -88,8 +88,13 @@ class TimeTracker:
             self._timer.cancel()
             self._timer = None
 
-    def serialize_object(self, obj):
-        '''serializes an Objekt to a unique id'''
+    def get_object_id(self, obj):
+        '''serializes an object to an id    
+
+        obj: the object to serialize
+
+        returns: the id
+        '''
         try:
             if obj.id:
                 pass
@@ -104,20 +109,37 @@ class TimeTracker:
             return f"entry:{obj.id}"
         raise ValueError("Unsupported objext type for serialization")
 
-    def deserialize_object(self, obj_id):
-        '''deserializes from an id to an object'''
+    def get_object_by_id(self, obj_id, parent = None):
+        '''deserializes from an id to an object
+        
+        uses the parent object if it is given to improve performance
 
+        obj_id: the id of the object
+        parent: the parent object
+
+        returns: the object
+        '''
         obj_type, key = obj_id.split(":",1)
         if obj_type == "semester":
             for semester in self._study.semesters:
                 if semester.id == key:
                     return semester
         elif obj_type == "module":
+            if parent is not None:
+                for module in parent.modules:
+                    if module.id == key:
+                        return module
+                    
             for semester in self._study.semesters:
                 for module in semester.modules:
                     if module.id == key:
                         return module
         elif obj_type == "entry":
+            if parent is not None:
+                for entry in parent.entries:
+                    if entry.id == key:
+                        return entry
+                    
             for semester in self._study.semesters:
                 for module in semester.modules:
                     for entry in module.entries:
@@ -126,6 +148,14 @@ class TimeTracker:
         return None
 
     def get_filtered_data_list(self, selected_semester, selected_module, selected_category):
+        '''gets a list of filtered data based on the selected semester, module and category
+
+        selected_semester: the selected semester
+        selected_module: the selected module
+        selected_category: the selected category
+
+        returns: a list of filtered data
+        '''
         filtered_data = []
 
         # filter by selected semester
@@ -356,8 +386,13 @@ class TimeTracker:
         '''
         return self._study.ECTS, self._study.hoursPerECTS, self._study.plannedEnd
     
-    def update_semester(self, semester_id, field, new_value):
-        semester = next((sem for sem in self.get_semesters() if sem.id == semester_id), None)
+    def update_semester(self, semester, field, new_value):
+        '''updates a semester
+        
+        semester: the semester to update
+        field: the field to update
+        new_value: the new value
+        '''
         if semester:
             if field == "ECTS":
                 try:
