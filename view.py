@@ -102,7 +102,7 @@ class TimeTrackerGUI:
         filemenu = Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="New", command=lambda: self.new_study(edit=False))
-        filemenu.add_command(label="Open", command=lambda: self.open_tracker())
+        filemenu.add_command(label="Open", command=lambda: self.open_study())
         filemenu.add_command(label="Save as", command=lambda: self.save_as())
         editmenu = Menu(menu)
         menu.add_cascade(label="Edit", menu=editmenu)
@@ -344,7 +344,7 @@ class TimeTrackerGUI:
         # self.chart_scope = self.tracker._study
         window.destroy()
 
-    def open_tracker(self):
+    def open_study(self):
         '''open a previously saved study from the filesystem'''
         data = [('json', '*.json')]
         filename = tk.filedialog.askopenfilename(
