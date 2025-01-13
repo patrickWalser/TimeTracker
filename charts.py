@@ -161,6 +161,14 @@ class ChartFactory:
     '''
     @staticmethod
     def create_chart(chart_type, *args, **kwargs):
+        ''' create a chart
+        
+        chart_type: the type of the chart
+        *args: arguments for the chart
+        **kwargs: keyword arguments for the chart
+        
+        returns: the chart object
+        '''
         if chart_type == ChartType.BURNDOWN:
             return BurndownChart(*args, **kwargs)
         elif chart_type == ChartType.PIE:

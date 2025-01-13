@@ -9,11 +9,11 @@ if __name__ == "__main__":
     root = tk.Tk()
 
     # model
-    study = Study(180,30, datetime.datetime.now())
+    model = Study(180,30, datetime.datetime.now())
 
     # controller
-    tracker = TimeTracker(study)
+    controller = TimeTracker(model)
 
     # view
-    app = TimeTrackerGUI(root, tracker)
+    view = TimeTrackerGUI(root, controller)
     root.mainloop()

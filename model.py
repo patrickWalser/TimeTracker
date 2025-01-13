@@ -49,7 +49,10 @@ class Entry:
             return self.stop_time - self.start_time
 
     def to_json(self):
-        '''converts the entry to a json object'''
+        '''converts the entry to a json object
+        
+        return: json representation of the entry
+        '''
         return {
             "id": self.id,
             "category": self.category,
@@ -60,7 +63,12 @@ class Entry:
 
     @classmethod
     def from_json(cls, data):
-        '''creates an Entry object from a json object'''
+        '''creates an Entry object from a json object
+        
+        data: json object
+        
+        returns: Entry object
+        '''
         entry =  cls(
             category=data["category"],
             comment=data["comment"],
@@ -174,6 +182,10 @@ class Module:
         return list(dictionary)
     
     def to_json(self):
+        '''converts the module to a json object
+        
+        returns: json representation of the module (including its entries)
+        '''
         return {
             "id": self.id,
             "name": self.name,
@@ -186,6 +198,12 @@ class Module:
 
     @classmethod
     def from_json(cls, data):
+        '''creates a Module object from a json object
+        
+        data: json object
+        
+        returns: Module object
+        '''
         module = cls(
             name=data["name"],
             ECTS=data["ECTS"],
@@ -317,6 +335,10 @@ class Semester:
         return list(cat_dict)
     
     def to_json(self):
+        '''converts the semester to a json object
+
+        returns: json representation of the semester (including its modules)
+        '''
         return {
             "id": self.id,
             "name": self.name,
@@ -327,6 +349,12 @@ class Semester:
 
     @classmethod
     def from_json(cls, data):
+        '''creates a Semester object from a json object 
+        
+        data: json object
+        
+        returns: Semester object
+        '''
         semester = cls(
             name=data["name"],
             ECTS=data["ECTS"],
@@ -483,6 +511,10 @@ class Study:
         return self.last_semester, self.last_module, self.last_entry
 
     def to_json(self):
+        '''converts the study to a json object
+        
+        returns: json representation of the study (including its semesters)
+        '''
         return {
             "ECTS": self.ECTS,
             "hoursPerECTS": self.hoursPerECTS,
@@ -495,6 +527,12 @@ class Study:
 
     @classmethod
     def from_json(cls, data):
+        '''creates a Study object from a json object
+        
+        data: json object
+        
+        returns: Study object
+        '''
         study = cls(
             ECTS=data["ECTS"],
             hoursPerECTS=data["hoursPerECTS"],

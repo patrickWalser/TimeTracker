@@ -345,14 +345,14 @@ class TimeTrackerGUI:
         window.destroy()
 
     def open_tracker(self):
-        '''open a previously saved tracker from the filesystem'''
+        '''open a previously saved study from the filesystem'''
         data = [('json', '*.json')]
         filename = tk.filedialog.askopenfilename(
             filetypes=data, defaultextension=data)
         self.load_data(filename)
 
     def save_as(self):
-        '''save the current tracker to the filesystem'''
+        '''save the current study to the filesystem'''
         data = [('json', '*.json')]
         filename = tk.filedialog.asksaveasfilename(
             filetypes=data, defaultextension=data)
@@ -535,9 +535,9 @@ class TimeTrackerGUI:
         '''updates the treeview
 
         deletes all existing items and generates new items depending on the
-        selected  semester, module and category
+        selected  semester, module and category.
 
-        serializes the data for the click event
+        Serializes the data for the click event
         '''
 
         semName = self.semester_var.get()
@@ -569,8 +569,7 @@ class TimeTrackerGUI:
     def on_tree_item_click(self, event):
         '''click event of the treeview
 
-        calls a new window to editor remove the clicked entry or create a
-        new entry
+        deserializes the data and opens a new window to edit or remove the clicked entry or create a new entry
         '''
         # deserialize the data
         selected = self.tree.focus()
@@ -584,6 +583,12 @@ class TimeTrackerGUI:
         
 
     def open_edit_entry_dialog(self, sem, mod, entry):
+        '''open a dialog to edit the entry
+        
+        sem: the semester of the entry
+        mod: the module of the entry
+        entry: the entry to edit
+        '''
 
         # new window
         edit_window = tk.Toplevel(self.root)
@@ -732,7 +737,7 @@ class TimeTrackerGUI:
     def save_data(self, filename=None):  # TODO: save in correct format
         '''saves the data
 
-        Saves the timetracker to the specified file.
+        Saves the study to the specified file.
         If no file is specified the last used file is used
         If a file is specified it is saved as last used file
 
@@ -741,9 +746,9 @@ class TimeTrackerGUI:
         self.tracker.export_to_json(filename)
 
     def load_data(self, filename=None):
-        '''Loads a previous saved timetracker.
+        '''Loads a previous saved study.
 
-        Loads the tracker specified by filename.
+        Loads the study specified by filename.
         If no filename is specified the last used file is used.
         If there is no last used file of a previous started session a new tracker
         is started.
