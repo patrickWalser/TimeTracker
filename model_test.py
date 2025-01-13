@@ -787,8 +787,11 @@ class UnitTestStudy(unittest.TestCase):
         study = model.Study(180, 30, datetime.datetime.now())
         
         sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
-        with self.assertRaises(AttributeError):
-            s,m,e = study.get_last_information()
+        s,m,e = study.get_last_information()
+
+        self.assertIsNone(s, "last semester was not set correctly")
+        self.assertIsNone(m, "last module was not set correctly")
+        self.assertIsNone(e, "last entry was not set correctly")
 
         study.set_last_information(sem, mod, entry)
         s,m,e = study.get_last_information()
