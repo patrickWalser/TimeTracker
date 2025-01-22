@@ -80,7 +80,7 @@ class BurndownChart(Chart):
             total_work - (total_work / total_days) * i for i in range(total_days + 1)]
 
         # calculate interval for 10 ticks
-        self.interval = int(total_days / 10)
+        self.interval = int(max(round(total_days / 10, 0), 1))
 
     def plot(self, frame):
         ''' plots a burndown chart
@@ -94,7 +94,7 @@ class BurndownChart(Chart):
         # plot target line
         ax.plot(self.plan_x, self.plan_y, linestyle='--', color='g')
 
-        # ticks for interval daysand year-month format
+        # ticks for interval days and year-month format
         ax.xaxis.set_major_locator(mdates.DayLocator(interval=self.interval))
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
 
