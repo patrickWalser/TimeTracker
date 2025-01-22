@@ -22,6 +22,8 @@ class TimeTracker:
         hoursPerECTS: defined number of hours used per ECTS (e.g. 30H/ECTS)
         '''
         self._study = study
+        self.current_semester = None
+        self.current_module = None
         self.current_entry = None
         self.on_status_change = None
         self._timer = None
@@ -279,6 +281,9 @@ class TimeTracker:
         returns: the chart
         '''
 
+        if(isinstance(scope, Module) and chart_type == ChartType.BURNDOWN):
+            raise ValueError("Burndown chart is not supported for modules")
+
         data = self._get_chart_data(scope, chart_type)
         chart = ChartFactory.create_chart(chart_type, *data)
         return chart
@@ -351,7 +356,7 @@ class TimeTracker:
         # Extract the sorted stop_times and values
         stop_times, values = zip(*stop_times_values)
 
-        return stop_times, values, total_work, planned_end
+        return list(stop_times), list(values), total_work, planned_end
     
     def update_study(self, ECTS, hoursPerECTS, plannedEnd):
         '''updates the study
