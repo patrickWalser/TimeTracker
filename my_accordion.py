@@ -157,9 +157,11 @@ class Accordion_Element(ttk.Frame):
         ''' destroys the element and its sub_elements'''
         for e in self.sub_elements:
             e.destroy()
+
         self.sub_element_frame.destroy()
         self.element_btn.destroy()
         super().destroy()
+        del self
 
 
 class Accordion(ttk.Frame):
@@ -309,12 +311,14 @@ class Accordion(ttk.Frame):
         ''' destroy all sections and the accordion '''
         for s in self.sections:
             s.destroy()
+
         super().destroy()
+        del self
 
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("Modern Accordion Navigation Bar")
+    root.title("Accordion Navigation Bar")
 
     frame = ttk.Frame(root)
     frame.grid(row=0, sticky='news')
