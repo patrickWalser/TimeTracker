@@ -1,27 +1,27 @@
 import unittest
-import TimeTracker
+import model
 import datetime
 from time import sleep
 
 
-class UnitTestEnry(unittest.TestCase):
+class UnitTestEntry(unittest.TestCase):
     def test_init(self):
         '''
         test the Entry constructor
         '''
         # Test without arguments
         with self.assertRaises(TypeError):
-            e = TimeTracker.Entry()
+            e = model.Entry()
 
     def test_equal(self):
         '''
         Test the __eq__ check
         '''
-        e = TimeTracker.Entry("a")
-        e1 = TimeTracker.Entry("b")
+        e = model.Entry("a")
+        e1 = model.Entry("b")
         sleep(1)
-        e2 = TimeTracker.Entry("a")
-        x = TimeTracker.Module(name="")
+        e2 = model.Entry("a")
+        x = model.Module(name="")
 
         self.assertEqual(
             e == x, False, "Comparing to wrong Type did not return NotImplemented")
@@ -38,7 +38,7 @@ class UnitTestEnry(unittest.TestCase):
         hard coded timeout is used
         '''
         timeout = 10
-        e = TimeTracker.Entry("")
+        e = model.Entry("")
         sleep(timeout)
         duration = e.stop()
 
@@ -54,7 +54,7 @@ class UnitTestEnry(unittest.TestCase):
         hard coded timeout is used
         '''
         timeout = 10
-        e = TimeTracker.Entry("")
+        e = model.Entry("")
         sleep(timeout)
         duration_before_stop = e.get_duration()
         sleep(timeout)
@@ -83,7 +83,29 @@ class UnitTestEnry(unittest.TestCase):
         sleep(5*timeout)
         self.assertEqual(first=duration, second=e.get_duration(),
                          msg="duration changed after stop()")
+                        
+    def test_to_json(self):
+        '''test the to_json method of Entry'''
+        e = model.Entry("test_category", "test_comment")
+        e.stop()
+        json_data = e.to_json()
+        self.assertEqual(e.id, json_data["id"], "ID does not match")
+        self.assertEqual(e.category, json_data["category"], "Category does not match")
+        self.assertEqual(e.comment, json_data["comment"], "Comment does not match")
+        self.assertEqual(e.start_time.isoformat(), json_data["start_time"], "Start time does not match")
+        self.assertEqual(e.stop_time.isoformat(), json_data["stop_time"], "Stop time does not match")
 
+    def test_from_json(self):
+        '''test the from_json method of Entry'''
+        e = model.Entry("test_category", "test_comment")
+        e.stop()
+        json_data = e.to_json()
+        e_from_json = model.Entry.from_json(json_data)
+        self.assertEqual(e.id, e_from_json.id, "ID does not match")
+        self.assertEqual(e.category, e_from_json.category, "Category does not match")
+        self.assertEqual(e.comment, e_from_json.comment, "Comment does not match")
+        self.assertEqual(e.start_time, e_from_json.start_time, "Start time does not match")
+        self.assertEqual(e.stop_time, e_from_json.stop_time, "Stop time does not match")
 
 class UnitTestModule(unittest.TestCase):
     def test_init(self):
@@ -91,10 +113,10 @@ class UnitTestModule(unittest.TestCase):
 
         # test with missing argument
         with self.assertRaises(TypeError):
-            mod = TimeTracker.Module()
+            mod = model.Module()
 
         # test if start and planned end are set correctly
-        mod = TimeTracker.Module(name="test")
+        mod = model.Module(name="test")
         start = datetime.datetime.now()
         self.assertAlmostEqual(first=start, second=mod.start,
                                msg="start time of the module\
@@ -111,11 +133,11 @@ class UnitTestModule(unittest.TestCase):
         '''
         Test the __eq__ check
         '''
-        m = TimeTracker.Module("a")
-        m1 = TimeTracker.Module("b")
+        m = model.Module("a")
+        m1 = model.Module("b")
         sleep(1)
-        m2 = TimeTracker.Module("a")
-        e = TimeTracker.Entry("")
+        m2 = model.Module("a")
+        e = model.Entry("")
 
         self.assertEqual(
             m == e, False, "Comparing to wrong Type did not return NotImplemented")
@@ -129,7 +151,7 @@ class UnitTestModule(unittest.TestCase):
     def test_start_module(self):
         '''test the start_module function'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         # test with missing argument
         with self.assertRaises(TypeError):
@@ -147,7 +169,7 @@ class UnitTestModule(unittest.TestCase):
     def test_addEntry(self):
         ''' tests if an entry is added correctly'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         # test with missing argument
         with self.assertRaises(TypeError):
@@ -167,7 +189,7 @@ class UnitTestModule(unittest.TestCase):
     def test_removeEntry(self):
         ''' tests if an entry is removed correctly'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         # test with missing argument
         with self.assertRaises(TypeError):
@@ -193,7 +215,7 @@ class UnitTestModule(unittest.TestCase):
     def test_get_durations(self):
         ''' tests if the durations are returned correct'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         data_categories = ["a", "b", "c", "d", "e", "f"]
         data_durations = [1, 10, 100]
@@ -225,7 +247,7 @@ class UnitTestModule(unittest.TestCase):
     def test_get_categories(self):
         ''' tests if the categories are returned correct'''
 
-        mod = TimeTracker.Module("test")
+        mod = model.Module("test")
 
         data_categories = ["a", "b", "c", "d", "e", "f"]
         data_durations = [1, 10, 100]
@@ -240,23 +262,53 @@ class UnitTestModule(unittest.TestCase):
         self.assertListEqual(list1=data_categories, list2=categories,
                              msg="List of categories is wrong")
 
+    def test_to_json(self):
+        '''test the to_json method of Module'''
+        mod = model.Module("test_module")
+        entry = mod.add_entry("test_category", "test_comment")
+        entry.stop()
+        json_data = mod.to_json()
+        self.assertEqual(mod.id, json_data["id"], "ID does not match")
+        self.assertEqual(mod.name, json_data["name"], "Name does not match")
+        self.assertEqual(mod.ECTS, json_data["ECTS"], "ECTS does not match")
+        self.assertEqual(mod.start.isoformat(), json_data["start"], "Start time does not match")
+        self.assertEqual(mod.plannedEnd.isoformat(), json_data["plannedEnd"], "Planned end does not match")
+        self.assertEqual(len(mod.entries), len(json_data["entries"]), "Entries length does not match")
+
+    def test_from_json(self):
+        '''test the from_json method of Module'''
+        mod = model.Module("test_module")
+        entry = mod.add_entry("test_category", "test_comment")
+        entry.stop()
+        json_data = mod.to_json()
+        mod_from_json = model.Module.from_json(json_data)
+        self.assertEqual(mod.id, mod_from_json.id, "ID does not match")
+        self.assertEqual(mod.name, mod_from_json.name, "Name does not match")
+        self.assertEqual(mod.ECTS, mod_from_json.ECTS, "ECTS does not match")
+        self.assertEqual(mod.start, mod_from_json.start, "Start time does not match")
+        self.assertEqual(mod.plannedEnd, mod_from_json.plannedEnd, "Planned end does not match")
+        self.assertEqual(len(mod.entries), len(mod_from_json.entries), "Entries length does not match")
+
 
 class UnitTestSemester(unittest.TestCase):
     def test_init(self):
         '''tests constructor of class Semester'''
         # test for missing argument
         with self.assertRaises(TypeError):
-            sem = TimeTracker.Semester()
+            sem = model.Semester()
+
+        sem = model.Semester(name="test")
+        self.assertTrue(len(sem.modules) == 0, msg="entry list is not empty")
 
     def test_equal(self):
         '''
         Test the __eq__ check
         '''
-        s = TimeTracker.Semester("a")
-        s1 = TimeTracker.Semester("b")
+        s = model.Semester("a")
+        s1 = model.Semester("b")
         sleep(1)
-        s2 = TimeTracker.Semester("a")
-        e = TimeTracker.Entry("")
+        s2 = model.Semester("a")
+        e = model.Entry("")
 
         self.assertEqual(
             s == e, False, "Comparing to wrong Type did not return NotImplemented")
@@ -269,8 +321,8 @@ class UnitTestSemester(unittest.TestCase):
 
     def test_add_module(self):
         '''tests if modules can be added to semester'''
-        sem = TimeTracker.Semester("semester")
-        mod = TimeTracker.Module("module")
+        sem = model.Semester("semester")
+        mod = model.Module("module")
 
         # check if list is empty
         self.assertEqual(first=0, second=len(sem.modules),
@@ -282,7 +334,7 @@ class UnitTestSemester(unittest.TestCase):
                          msg="list of modules is not empty")
 
         # try to add wrong type
-        entry = TimeTracker.Entry(category="cat")
+        entry = model.Entry(category="cat")
         with self.assertRaises(TypeError):
             sem.add_module(entry)
 
@@ -293,7 +345,7 @@ class UnitTestSemester(unittest.TestCase):
         '''tests if entries are created correctly
         and are added to the module
         '''
-        sem = TimeTracker.Semester("semester")
+        sem = model.Semester("semester")
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -321,7 +373,7 @@ class UnitTestSemester(unittest.TestCase):
         '''tests if entries are removed correctly
         and if modules without entries are deleted
         '''
-        sem = TimeTracker.Semester("semester")
+        sem = model.Semester("semester")
 
         # wrong arguments
         with self.assertRaises(TypeError):
@@ -358,7 +410,7 @@ class UnitTestSemester(unittest.TestCase):
     def test_get_durations(self):
         '''test if correct module durations are returned'''
 
-        sem = TimeTracker.Semester("semester")
+        sem = model.Semester("semester")
         data_modules = ["mod1", "mod2"]
         data_categories = ["a", "b", "c", "d", "e", "f"]
         data_durations = [1, 10, 100]
@@ -389,7 +441,7 @@ class UnitTestSemester(unittest.TestCase):
     def test_get_module(self):
         '''test if a module can be searched by name'''
 
-        sem = TimeTracker.Semester("sem")
+        sem = model.Semester("sem")
 
         with self.assertRaises(TypeError):
             sem.get_module()
@@ -397,7 +449,7 @@ class UnitTestSemester(unittest.TestCase):
         # generate data
         module_data = ["mod1", "mod2", "mod3"]
         for mod_name in module_data:
-            mod = TimeTracker.Module(name=mod_name)
+            mod = model.Module(name=mod_name)
             sem.add_module(mod)
 
         for mod_name in module_data:
@@ -412,12 +464,12 @@ class UnitTestSemester(unittest.TestCase):
     def test_get_categories(self):
         '''test if all used categories are returned'''
 
-        sem = TimeTracker.Semester("sem")
+        sem = model.Semester("sem")
 
         # generate data
         module_data = ["mod1", "mod11", "mod2"]
         for mod_name in module_data:
-            mod = TimeTracker.Module(name=mod_name)
+            mod = model.Module(name=mod_name)
             mod.add_entry("cat_"+mod_name)
             sem.add_module(mod)
 
@@ -435,6 +487,29 @@ class UnitTestSemester(unittest.TestCase):
         self.assertEqual(ref_lst, mod_lst, "sem.get_categories did not return \
                          expected list")
 
+    def test_to_json(self):
+        '''test the to_json method of Semester'''
+        sem = model.Semester("test_semester")
+        mod = sem.add_module(model.Module("test_module"))
+        json_data = sem.to_json()
+        self.assertEqual(sem.id, json_data["id"], "ID does not match")
+        self.assertEqual(sem.name, json_data["name"], "Name does not match")
+        self.assertEqual(sem.ECTS, json_data["ECTS"], "ECTS does not match")
+        self.assertEqual(sem.plannedEnd.isoformat() if sem.plannedEnd else None, json_data["plannedEnd"], "Planned end does not match")
+        self.assertEqual(len(sem.modules), len(json_data["modules"]), "Modules length does not match")
+
+    def test_from_json(self):
+        '''test the from_json method of Semester'''
+        sem = model.Semester("test_semester")
+        mod = sem.add_module(model.Module("test_module"))
+        json_data = sem.to_json()
+        sem_from_json = model.Semester.from_json(json_data)
+        self.assertEqual(sem.id, sem_from_json.id, "ID does not match")
+        self.assertEqual(sem.name, sem_from_json.name, "Name does not match")
+        self.assertEqual(sem.ECTS, sem_from_json.ECTS, "ECTS does not match")
+        self.assertEqual(sem.plannedEnd, sem_from_json.plannedEnd, "Planned end does not match")
+        self.assertEqual(len(sem.modules), len(sem_from_json.modules), "Modules length does not match")
+
 
 class UnitTestStudy(unittest.TestCase):
     def test_init(self):
@@ -442,21 +517,21 @@ class UnitTestStudy(unittest.TestCase):
 
         # test call with wrong type
         with self.assertRaises(TypeError):
-            TimeTracker.Study()
+            model.Study()
 
         with self.assertRaises(TypeError):
-            TimeTracker.Study(ECTS=5)
+            model.Study(ECTS=5)
 
         with self.assertRaises(TypeError):
-            TimeTracker.Study(hoursPerECTS=30)
+            model.Study(hoursPerECTS=30)
 
         with self.assertRaises(TypeError):
-            TimeTracker.Study(plannedEnd=datetime.datetime.now())
+            model.Study(plannedEnd=datetime.datetime.now())
 
     def test_add_semester(self):
         '''tests if adding semesters works'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
@@ -470,7 +545,7 @@ class UnitTestStudy(unittest.TestCase):
                          msg="list of semesters is not empty")
 
         # test if adding a semester works
-        sem = TimeTracker.Semester(name="semester")
+        sem = model.Semester(name="semester")
         study.add_semester(sem)
 
         self.assertEqual(first=1, second=len(study.semesters),
@@ -479,7 +554,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_add_entry(self):
         '''tests if adding an entry works'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
@@ -517,7 +592,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_remove_entry(self):
         '''tests if removing an entry works'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         # wrong arguments
@@ -555,7 +630,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_get_durations(self):
         '''test if correct semester durations are returned'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
         data_semesters = ["sem1", "sem2"]
         data_modules = ["mod1", "mod2"]
@@ -595,7 +670,7 @@ class UnitTestStudy(unittest.TestCase):
     def test_get_semester(self):
         '''test if a semester can be searched by name'''
 
-        study = TimeTracker.Study(
+        study = model.Study(
             ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
 
         with self.assertRaises(TypeError):
@@ -604,7 +679,7 @@ class UnitTestStudy(unittest.TestCase):
         # generate data
         semester_data = ["sem1", "sem2", "sem3"]
         for sem_name in semester_data:
-            sem = TimeTracker.Semester(name=sem_name)
+            sem = model.Semester(name=sem_name)
             study.add_semester(sem)
 
         # test if semesters can be found
@@ -619,16 +694,20 @@ class UnitTestStudy(unittest.TestCase):
 
     def test_get_modules(self):
         '''test if all used modules are returned'''
-        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        study = model.Study(180, 30, datetime.datetime.now())
 
         # generate data
+        ref_lst = []
+        ref_lst2 = []
         sem_data = ["sem1", "sem11", "sem2"]
         for sem_name in sem_data:
-            sem = TimeTracker.Semester(name=sem_name)
-            sem.add_entry(moduleName="mod_"+sem_name, category="")
+            sem = model.Semester(name=sem_name)
+            m,_=sem.add_entry(moduleName="mod_"+sem_name, category="")
             study.add_semester(sem)
+            ref_lst.append(m)
+            if("sem1" in sem_name):
+                ref_lst2.append(m)
 
-        ref_lst = ["mod_"+sem_name for sem_name in sem_data]
         sem_lst = study.get_modules()
         self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
                          expected list")
@@ -637,14 +716,13 @@ class UnitTestStudy(unittest.TestCase):
         self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
                          expected list")
 
-        ref_lst = ["mod_sem1", "mod_sem11"]
         sem_lst = study.get_modules(semName="sem1")
-        self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
+        self.assertEqual(ref_lst2, sem_lst, "study.get_modules did not return \
                          expected list")
 
     def test_get_categories(self):
         '''test if all used modules are returned'''
-        study = TimeTracker.Study(180, 30, datetime.datetime.now())
+        study = model.Study(180, 30, datetime.datetime.now())
 
         # generate data
         sem_data = ["sem1", "sem11", "sem2"]
@@ -684,78 +762,72 @@ class UnitTestStudy(unittest.TestCase):
         sem_lst = study.get_categories(semName="sem1", modName="mod1")
         self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
                          expected list")
-
-
-class TimeTrackerUnitTest(unittest.TestCase):
-    def test_init(self):
-        '''test the constructor of TimeTracker'''
-        # wrong arguments
+        
+    def test_set_last_information(self):
+        '''test if setting the last information works'''
+        study = model.Study(180, 30, datetime.datetime.now())
+        
+        sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
         with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker()
+            study.set_last_information("a","b","c")
         with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker(ECTS=180)
+            study.set_last_information(mod,mod,entry)
         with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker(hoursPerECTS=30)
+            study.set_last_information(sem,sem,entry)
         with self.assertRaises(TypeError):
-            tracker = TimeTracker.TimeTracker(
-                plannedEnd=datetime.datetime.now())
+            study.set_last_information(sem,mod,mod)
 
-    def test_start_tracking(self):
-        '''test the start tracking function'''
-        timeTracker = TimeTracker.TimeTracker(
-            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
+        study.set_last_information(sem, mod, entry)
+        self.assertEqual(sem, study.last_semester, "last semester was not set correctly") 
+        self.assertEqual(mod, study.last_module, "last module was not set correctly")
+        self.assertEqual(entry, study.last_entry, "last entry was not set correctly")                
+    
+    def test_get_last_information(self):
+        '''test if reading the last information works'''
+        study = model.Study(180, 30, datetime.datetime.now())
+        
+        sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
+        s,m,e = study.get_last_information()
 
-        # wrong arguments
-        with self.assertRaises(TypeError):
-            timeTracker.start_tracking()
-        with self.assertRaises(TypeError):
-            timeTracker.start_tracking(semesterName="sem")
-        with self.assertRaises(TypeError):
-            timeTracker.start_tracking(semesterName="sem", moduleName="mod")
+        self.assertIsNone(s, "last semester was not set correctly")
+        self.assertIsNone(m, "last module was not set correctly")
+        self.assertIsNone(e, "last entry was not set correctly")
 
-        self.assertIsNone(timeTracker.current_entry, "Current entry was set\
-                          althoug start_tracking failed")
+        study.set_last_information(sem, mod, entry)
+        s,m,e = study.get_last_information()
 
-        # test starting an entry
-        timeTracker.start_tracking(semesterName="sem", moduleName="mod",
-                                   category="cat")
+        self.assertEqual(sem, s, "last semester was not set correctly") 
+        self.assertEqual(mod, m, "last module was not set correctly")
+        self.assertEqual(entry, e, "last entry was not set correctly")  
 
-        self.assertIsNotNone(timeTracker.current_entry, "Current entry is None\
-                             although tracking was started successfully")
+    def test_to_json(self):
+        '''test the to_json method of Study'''
+        study = model.Study(180, 30, datetime.datetime.now())
+        sem, mod, entry = study.add_entry("test_semester", "test_module", "test_category", "test_comment")
+        study.set_last_information(sem, mod, entry)
+        json_data = study.to_json()
+        self.assertEqual(study.ECTS, json_data["ECTS"], "ECTS does not match")
+        self.assertEqual(study.hoursPerECTS, json_data["hoursPerECTS"], "Hours per ECTS does not match")
+        self.assertEqual(study.plannedEnd.isoformat(), json_data["plannedEnd"], "Planned end does not match")
+        self.assertEqual(len(study.semesters), len(json_data["semesters"]), "Semesters length does not match")
+        self.assertEqual(study.last_semester.to_json(), json_data["last_semester"], "Last semester does not match")
+        self.assertEqual(study.last_module.to_json(), json_data["last_module"], "Last module does not match")
+        self.assertEqual(study.last_entry.to_json(), json_data["last_entry"], "Last entry does not match")
 
-        sem = timeTracker.study.get_semester("sem")
-        mod = sem.get_module("mod")
-
-        self.assertEqual(first=timeTracker.current_entry, second=mod.entries[0],
-                         msg="Entry which was started is not current entry")
-
-    def test_stop_tracking(self):
-        '''test stopping the tracking'''
-        timeTracker = TimeTracker.TimeTracker(
-            ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
-
-        # stop not running tracking
-        with self.assertRaises(RuntimeError):
-            timeTracker.stop_tracking()
-
-        # stop a running entry
-        timeTracker.start_tracking(semesterName="sem", moduleName="mod",
-                                   category="cat")
-
-        timeTracker.stop_tracking()
-
-        self.assertIsNone(timeTracker.current_entry, "Current entry was not\
-                          reset after stopping the tracking")
-
-        ref_stop = datetime.datetime.now()
-        sem = timeTracker.study.get_semester("sem")
-        mod = sem.get_module("mod")
-        stop = mod.entries[0].stop_time
-
-        self.assertEqual(first=ref_stop, second=stop,
-                         msg="Stop time of currently stopped entra is not\
-                            datetime.now()")
-
+    def test_from_json(self):
+        '''test the from_json method of Study'''
+        study = model.Study(180, 30, datetime.datetime.now())
+        sem, mod, entry = study.add_entry("test_semester", "test_module", "test_category", "test_comment")
+        study.set_last_information(sem, mod, entry)
+        json_data = study.to_json()
+        study_from_json = model.Study.from_json(json_data)
+        self.assertEqual(study.ECTS, study_from_json.ECTS, "ECTS does not match")
+        self.assertEqual(study.hoursPerECTS, study_from_json.hoursPerECTS, "Hours per ECTS does not match")
+        self.assertEqual(study.plannedEnd, study_from_json.plannedEnd, "Planned end does not match")
+        self.assertEqual(len(study.semesters), len(study_from_json.semesters), "Semesters length does not match")
+        self.assertEqual(study.last_semester.id, study_from_json.last_semester.id, "Last semester does not match")
+        self.assertEqual(study.last_module.id, study_from_json.last_module.id, "Last module does not match")
+        self.assertEqual(study.last_entry.id, study_from_json.last_entry.id, "Last entry does not match")
 
 if __name__ == '__main__':
     unittest.main()
