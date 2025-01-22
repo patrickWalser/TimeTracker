@@ -1,12 +1,7 @@
 from my_accordion import Accordion
 import tkinter as tk
 from tkinter import messagebox, ttk, Frame, Menu
-import pickle
-import json
-import base64
-from charts import ChartType, ChartFactory
-from model import Study, Semester, Module
-from controller import TimeTracker
+from charts import ChartType
 from tkcalendar import DateEntry
 import datetime
 
@@ -240,17 +235,18 @@ class TimeTrackerGUI:
         analyze_view: the frame where the analyze view is placed
         '''
         self.accordion = None
+        self.accordion_frame = analyze_view
         self.chart_frame = tk.Frame(analyze_view)
         self.chart_frame.grid(row=0, column=1, sticky='news')
-        self.active_chart = ChartType.PIE
+        self.active_chart = ChartType.BURNDOWN
         chart_frame_header = tk.Frame(self.chart_frame)
         chart_frame_header.grid(row=0, sticky='nw')
-        btn_burndown = tk.Button(chart_frame_header, text="Burndown-Chart",
-                                 command=lambda: self.set_active_chart(ChartType.BURNDOWN))
-        btn_burndown.grid(row=0, column=0, sticky='nw')
-        btn_pie = tk.Button(chart_frame_header, text="Pie-Chart",
-                            command=lambda: self.set_active_chart(ChartType.PIE))
-        btn_pie.grid(row=0, column=1, sticky='nw')
+        self.btn_burndown = tk.Button(chart_frame_header, text="Burndown-Chart",
+                                 command=lambda: (self.set_active_chart(ChartType.BURNDOWN), self.format_buttons(ChartType.BURNDOWN)))
+        self.btn_burndown.grid(row=0, column=0, sticky='nw')
+        self.btn_pie = tk.Button(chart_frame_header, text="Pie-Chart",
+                            command=lambda: (self.set_active_chart(ChartType.PIE), self.format_buttons(ChartType.PIE)))
+        self.btn_pie.grid(row=0, column=1, sticky='nw')
 
         self.plot_frame = tk.Frame(self.chart_frame)
         self.plot_frame.grid(row=1, sticky='news')
@@ -269,6 +265,8 @@ class TimeTrackerGUI:
         self.load_data()
         self.update_treeview()
         self.setup_observers()
+        self.generate_accordion(self.accordion_frame)
+        self.format_buttons(self.active_chart)
         self.chart_scope = self.tracker._study
 
 # Commands for the filemenu
@@ -708,6 +706,15 @@ class TimeTrackerGUI:
                         mod.name, lambda mod=mod: self.print_chart(mod))
         self.accordion.reorder()
 
+    def format_buttons(self, chart_type):
+        '''formats the buttons based on the active chart type'''
+        if chart_type == ChartType.BURNDOWN:
+            self.btn_burndown.config(relief=tk.SUNKEN, bg="lightblue")
+            self.btn_pie.config(relief=tk.RAISED, bg="SystemButtonFace")
+        elif chart_type == ChartType.PIE:
+            self.btn_pie.config(relief=tk.SUNKEN, bg="lightblue")
+            self.btn_burndown.config(relief=tk.RAISED, bg="SystemButtonFace")
+
     def set_active_chart(self, chart_type):
         '''sets the active chart type and prints the chart
 
@@ -724,17 +731,23 @@ class TimeTrackerGUI:
 
         scope: the data (study, Semester, Module) which will be printed
         '''
+        self.chart_scope = scope
         # prevent memory leak because matplotlib figure remains open
         # TODO: write to Testprotocol
         # TODO: Burndown check for instance of scope
-        if self.chart:
+        if self.chart:  
             self.chart.destroy()
-
+            
         # create data depending on the chart type
-        self.chart = self.tracker.generate_chart(scope, self.active_chart)
+        try:
+            self.chart = self.tracker.generate_chart(scope, self.active_chart)
+        except ValueError:
+            messagebox.showerror("Error", "Chart could not be generated with the selected data1")
+            return
+        
         self.chart.plot(self.plot_frame)
 
-    def save_data(self, filename=None):  # TODO: save in correct format
+    def save_data(self, filename=None):
         '''saves the data
 
         Saves the study to the specified file.
