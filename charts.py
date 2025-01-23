@@ -55,7 +55,7 @@ class BurndownChart(Chart):
     implements plot function for burndown charts
     '''
 
-    def __init__(self, date_lst, work_lst, total_work, planned_end):
+    def __init__(self, title, date_lst, work_lst, total_work, planned_end):
         ''' init a burndown chart
 
         calculates the remaining_work and the target line (planned)
@@ -66,6 +66,7 @@ class BurndownChart(Chart):
         planned_end: the planned end
         '''
         super().__init__()
+        self.title = title
         self.dates = date_lst
         self.remaining_work = []
         remaining = total_work
@@ -101,7 +102,7 @@ class BurndownChart(Chart):
         # rotate the x-axis labels to prevent overlapping
         fig.autofmt_xdate()
 
-        ax.set_title('Burndown Chart')
+        ax.set_title(self.title)
         ax.set_xlabel('Date')
         ax.set_ylabel('Remaining Work')
         ax.grid(True)
@@ -116,7 +117,7 @@ class PieChart(Chart):
     implements plot function for pie charts
     '''
 
-    def __init__(self, labels, sizes):
+    def __init__(self, title, labels, sizes):
         ''' init a pie chart
 
         calculates the relative sizes
@@ -125,6 +126,7 @@ class PieChart(Chart):
         sizes: the absolute sizes of the categories
         '''
         super().__init__()
+        self.title = title
         self.labels = labels
         sum = np.sum(sizes)
         if sum == 0.0:
@@ -140,7 +142,7 @@ class PieChart(Chart):
         fig, ax = plt.subplots(figsize=(5, 5))
         wedges, _, _ = ax.pie(self.rel_sizes,
                               autopct='%1.1f%%', startangle=0)
-        ax.set_title('Pie Chart')
+        ax.set_title(self.title)
         # Equal aspect ratio ensures that pie is drawn as a circle.
         ax.axis('equal')
 

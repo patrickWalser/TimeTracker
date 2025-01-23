@@ -650,6 +650,7 @@ class TimeTrackerUnitTest(unittest.TestCase):
         
         # Assertions
         self.assertIsNotNone(chart)
+        self.assertEqual(chart.title, "Pie Chart")
         self.assertIsInstance(chart, PieChart)
         self.assertEqual(chart.labels, ["sem"])
         self.assertEqual(chart.rel_sizes, [100.0])
@@ -676,9 +677,44 @@ class TimeTrackerUnitTest(unittest.TestCase):
         
         # Assertions
         self.assertIsNotNone(chart)
+        self.assertEqual(chart.title, "Burndown Chart")
         self.assertIsInstance(chart, BurndownChart)
         self.assertEqual(chart.dates,[module.start, module.stop])
         self.assertEqual(chart.remaining_work, [180, 175])
+
+    def test_generate_chart_scope(self):
+        '''test the generate_chart method with different scopes'''
+        timeTracker = controller.TimeTracker(self.study)
+
+        # Create mock data
+        semester = model.Semester(name="sem", ECTS=10, plannedEnd=datetime.datetime(2023, 12, 31))
+        module = model.Module(name="mod", ECTS=5)
+        module.start = datetime.datetime(2023, 1, 1)
+        module.plannedEnd = datetime.datetime(2023, 5, 30)
+        module.stop = datetime.datetime(2023, 6, 30)
+        entry = model.Entry(category="cat", comment="com")
+        sleep(1)
+        entry.stop()
+        module.entries.append(entry)
+        semester.modules.append(module)
+        self.study.semesters.append(semester)
+
+        # Generate BURNDOWN for semester
+        chart = timeTracker.generate_chart(semester, ChartType.BURNDOWN)
+        self.assertEqual(chart.title, "Burndown Chart for sem")
+
+        # Generate PIE for semester
+        chart = timeTracker.generate_chart(semester, ChartType.PIE)
+        self.assertEqual(chart.title, "Pie Chart for sem")
+
+        # Generate PIE for module
+        chart = timeTracker.generate_chart(module, ChartType.PIE)
+        self.assertEqual(chart.title, "Pie Chart for mod")
+
+        # Generate BURNDOWN for module
+        with self.assertRaises(ValueError, msg="BURNDOWN chart for module should raise an error"):
+            chart = timeTracker.generate_chart(module, ChartType.BURNDOWN)
+
 
     def test_update_study(self):
         '''test the update_study method'''

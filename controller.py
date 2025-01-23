@@ -284,8 +284,22 @@ class TimeTracker:
         if(isinstance(scope, Module) and chart_type == ChartType.BURNDOWN):
             raise ValueError("Burndown chart is not supported for modules")
 
+        # generate the titel
+        title = ""
+        if chart_type == ChartType.BURNDOWN:
+            title = "Burndown Chart"
+        elif chart_type == ChartType.PIE:
+            title = "Pie Chart"
+        else:
+            title = ""
+
+        try:
+            title = f"{title} for {scope.name}"
+        except AttributeError:
+            pass
+
         data = self._get_chart_data(scope, chart_type)
-        chart = ChartFactory.create_chart(chart_type, *data)
+        chart = ChartFactory.create_chart(chart_type, title, *data)
         return chart
 
     def _get_chart_data(self, scope, chart_tpe=ChartType.PIE):

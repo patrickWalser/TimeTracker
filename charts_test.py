@@ -16,24 +16,25 @@ class TestBurndownChart(unittest.TestCase):
         self.root.destroy()
 
     def test_init(self):
-        chart = BurndownChart(self.dates, self.work_lst, self.total_work, self.planned_end)
+        chart = BurndownChart("title", self.dates, self.work_lst, self.total_work, self.planned_end)
 
         expected_remaining_work = [90, 80, 70, 60, 50, 40, 30, 20, 10, 0]
         expected_plan_x = [self.dates[0] + datetime.timedelta(days=i) for i in range(10)]
         expected_plan_y = [self.total_work - (self.total_work / 9) * i for i in range(10)]
         expected_interval = 1  # 10 days / 10 ticks
 
+        self.assertEqual(chart.title, "title")
         self.assertEqual(chart.remaining_work, expected_remaining_work)
         self.assertEqual(chart.plan_x, expected_plan_x)
         self.assertEqual(chart.plan_y, expected_plan_y)
         self.assertEqual(chart.interval, expected_interval)
 
     def test_plot(self):
-        chart = BurndownChart(self.dates, self.work_lst, self.total_work, self.planned_end)
+        chart = BurndownChart("title", self.dates, self.work_lst, self.total_work, self.planned_end)
         frame = tk.Frame(self.root)
         chart.plot(frame)
         self.assertIsNotNone(chart.figure)
-        self.assertEqual(chart.figure.axes[0].get_title(), 'Burndown Chart')
+        self.assertEqual(chart.figure.axes[0].get_title(), 'title')
         self.assertEqual(chart.figure.axes[0].get_xlabel(), 'Date')
         self.assertEqual(chart.figure.axes[0].get_ylabel(), 'Remaining Work')
 
@@ -56,31 +57,32 @@ class TestPieChartPlot(unittest.TestCase):
         labels = []
         sizes = []
         with self.assertRaises(ValueError) as context:
-            PieChart(labels, sizes)
+            PieChart("",labels, sizes)
         self.assertEqual(str(context.exception), "sum of sizes is zero")
 
         # sum of sizes is zero
         labels = ['Apples', 'Bananas', 'Cherries', 'Dates']
         sizes = [0, 0, 0, 0]
         with self.assertRaises(ValueError) as context:
-            PieChart(labels, sizes)
+            PieChart("",labels, sizes)
         self.assertEqual(str(context.exception), "sum of sizes is zero")
 
         #valid data
         labels = ['Apples', 'Bananas', 'Cherries', 'Dates']
         sizes = [15, 30, 45, 10]
-        chart = PieChart(labels, sizes)
+        chart = PieChart("title",labels, sizes)
 
         expected_rel_sizes = [15.0, 30.0, 45.0, 10.0]
+        self.assertEqual(chart.title, "title")
         self.assertEqual(chart.labels, labels)
         self.assertEqual(chart.rel_sizes, expected_rel_sizes)
 
     def test_plot(self):
         frame = tk.Frame(self.root)
-        chart = PieChart(self.labels, self.sizes)
+        chart = PieChart("title", self.labels, self.sizes)
         chart.plot(frame)
         self.assertIsNotNone(chart.figure)
-        self.assertEqual(chart.figure.axes[0].get_title(), 'Pie Chart')
+        self.assertEqual(chart.figure.axes[0].get_title(), 'title')
         
         expected_labels =[]
         for i in range(0,len(self.labels)):
@@ -105,7 +107,7 @@ class TestChart(unittest.TestCase):
         self.root.destroy()
 
     def test_destroy(self):
-        chart = BurndownChart([datetime.date(2024, 6, 1), datetime.date(2024, 6, 2)], [10,10], 20, datetime.date.today())
+        chart = BurndownChart("title",[datetime.date(2024, 6, 1), datetime.date(2024, 6, 2)], [10,10], 20, datetime.date.today())
         frame = tk.Frame(self.root)
         chart.plot(frame)
 
