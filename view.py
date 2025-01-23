@@ -497,6 +497,7 @@ class TimeTrackerGUI:
             self.start_stop_btn.config(text="Start")
             bgColor = self.root.cget("background")
             self.current_duration_label.configure(background=bgColor)
+            self.current_duration_label.configure(text="")
         
         self.update_treeview()
 
