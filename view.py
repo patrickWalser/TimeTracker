@@ -182,7 +182,8 @@ class TimeTrackerGUI:
             tracker_view, text="comment: ").grid(row=0, column=6)
         self.comment_var = tk.StringVar()
         self.comment_entry = tk.Entry(
-            tracker_view, width=20, textvariable=self.comment_var).grid(row=0, column=7)
+            tracker_view, width=20, textvariable=self.comment_var)
+        self.comment_entry.grid(row=0, column=7)
 
         self.is_tracking = False
         self.start_stop_btn = tk.Button(
