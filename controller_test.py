@@ -769,6 +769,26 @@ class TimeTrackerUnitTest(unittest.TestCase):
         self.assertEqual(new_study.plannedEnd, new_plannedEnd)
         self.assertTrue(update_called, "on_treeview_update was not called")
 
+    def test_get_last_tracking_information(self):
+        '''test the get_last_tracking_information method'''
+        timeTracker = controller.TimeTracker(self.study)
+        
+        # Test with no entries
+        last_info = timeTracker.get_last_tracking_information()
+        self.assertEqual(last_info, ('', '', '', ''))
+
+        # Add an entry to the study
+        timeTracker.start_tracking("sem", "mod", "cat", "com")
+        semester = timeTracker.current_semester
+        module = timeTracker.current_module
+        entry = timeTracker.current_entry
+
+        timeTracker.stop_tracking()
+        
+        # Get the last tracking information
+        last_info = timeTracker.get_last_tracking_information()
+        self.assertEqual(last_info, (semester.name, module.name, entry.category, entry.comment))
+
 
 
 

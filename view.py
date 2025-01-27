@@ -84,7 +84,6 @@ class TimeTrackerGUI:
         self.root.after(0, self.initial_load)
 
         self.chart = None
-        self.setup_observers()
 
     def setup_menu(self):
         '''setup the menu
@@ -269,6 +268,17 @@ class TimeTrackerGUI:
         self.generate_accordion(self.accordion_frame)
         self.format_buttons(self.active_chart)
         self.chart_scope = self.tracker._study
+
+    def load_last_tracking(self):
+        '''load the last tracking
+
+        loads the last tracking from the tracker and updates the UI elements
+        '''
+        semName, modName, cat, comment = self.tracker.get_last_tracking_information()
+        self.semester_var.set(semName)
+        self.module_var.set(modName)
+        self.category_var.set(cat)
+        self.comment_var.set(comment)
 
 # Commands for the filemenu
     def new_study(self, edit):
@@ -772,6 +782,7 @@ class TimeTrackerGUI:
         '''
         try:
             self.tracker.import_from_json(filename)
+            self.load_last_tracking()
         except FileNotFoundError as e:
             messagebox.showinfo("Info", "No file found. Starting with new study")
             self.new_study(edit=False)

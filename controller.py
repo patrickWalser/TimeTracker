@@ -73,6 +73,20 @@ class TimeTracker:
         if self.on_treeview_update:
             self.on_treeview_update()
 
+    def get_last_tracking_information(self):
+        '''gets the last tracking information
+
+        returns: the last semesterName, modulename, category and comment
+        '''
+        sem, mod, entry = self._study.get_last_information()
+
+        semName = getattr(sem, 'name', '')
+        modName = getattr(mod, 'name', '')
+        category = getattr(entry, 'category', '')
+        comment = getattr(entry, 'comment', '')
+
+        return semName, modName, category, comment
+    
     def _start_timer(self):
         """starts a timer for cyclic notification of observer"""
         def update():
