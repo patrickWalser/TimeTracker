@@ -74,13 +74,15 @@ class BurndownChart(Chart):
             remaining -= ects
             self.remaining_work.append(remaining)
 
-        total_days = (planned_end - date_lst[0]).days
+        plan_days = max((planned_end - date_lst[0]).days,1)
         self.plan_x = [
-            date_lst[0] + datetime.timedelta(days=i) for i in range(total_days + 1)]
+            date_lst[0] + datetime.timedelta(days=i) for i in range(plan_days + 1)]
         self.plan_y = [
-            total_work - (total_work / total_days) * i for i in range(total_days + 1)]
+            total_work - (total_work / plan_days) * i for i in range(plan_days + 1)]
 
         # calculate interval for 10 ticks
+        max_date = max(date_lst + [planned_end])
+        total_days = (max_date - date_lst[0]).days
         self.interval = int(max(round(total_days / 10, 0), 1))
 
     def plot(self, frame):
