@@ -106,7 +106,7 @@ class TimeTrackerGUI:
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(
-            label="About", command=lambda: print("about clicked"))
+            label="About", command=lambda: messagebox.showinfo("About", "TimeTracker v0.1"))
 
     def setup_views(self):
         '''setup the views
