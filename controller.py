@@ -4,7 +4,7 @@ import threading
 import uuid
 import json
 from model import Study, Semester, Module, Entry
-from charts import ChartFactory, ChartType
+from charts import ChartFactory, ChartType, Chart
 from settings import Settings
 
 class TimeTracker:
@@ -286,7 +286,7 @@ class TimeTracker:
         
         self.remove_entry(semester, module, entry)
 
-    def generate_chart(self, scope, chart_type=ChartType.PIE):
+    def generate_chart(self, scope, chart_type=ChartType.PIE)-> Chart:
         '''generates a chart
 
         scope: the data (study, Semester, Module) which will be printed
