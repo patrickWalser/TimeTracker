@@ -496,11 +496,11 @@ class TimeTrackerGUI:
         Label and button text are updated
         '''
 
-        self.tracker.toggle_tracking(self.semester_var.get(), self.module_var.get(),
+        started = self.tracker.toggle_tracking(self.semester_var.get(), self.module_var.get(),
                 self.category_var.get(), self.comment_var.get())
         
         # update button text and label visibility
-        if self.tracker.current_entry:
+        if started:
             self.start_stop_btn.config(text="Stop")
             self.current_duration_label.config(bg="lightgreen")
         else:
@@ -508,8 +508,6 @@ class TimeTrackerGUI:
             bgColor = self.root.cget("background")
             self.current_duration_label.configure(background=bgColor)
             self.current_duration_label.configure(text="")
-        
-        self.update_treeview()
 
     def btn_finish_click(self):
         ''' finishes the module'''
