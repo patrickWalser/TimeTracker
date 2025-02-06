@@ -24,7 +24,7 @@ class Chart(ABC):
         ''' abstract method to plot '''
         pass
 
-    def create_canvas(self, fig, frame):
+    def _create_canvas(self, fig, frame):
         ''' draw the Matplot figure to a frame 
 
         fig: the matplotlib figure
@@ -109,7 +109,7 @@ class BurndownChart(Chart):
         ax.set_ylabel('Remaining Work')
         ax.grid(True)
 
-        self.create_canvas(fig, frame)
+        self._create_canvas(fig, frame)
 
 
 class PieChart(Chart):
@@ -155,7 +155,7 @@ class PieChart(Chart):
         ax.legend(wedges, labels_with_pct, loc="lower left",
                   bbox_to_anchor=(-0.15, -0.15, 0, 0))
 
-        self.create_canvas(fig, frame)
+        self._create_canvas(fig, frame)
 
 
 class ChartFactory:
