@@ -65,13 +65,27 @@ class TimeTracker:
             self.on_status_change(datetime.timedelta(0))
 
     def toggle_tracking(self, semester, module, category, comment=""):
+        '''toggles the tracking
+
+        semester: the semester
+        module: the module
+        category: the category
+        comment: an optional comment
+
+        returns: True if the tracking was started, False if the tracking was stopped
+        '''
+        ret = False
         if self.current_entry:
             self.stop_tracking()
+            ret = False
         else:
             self.start_tracking(semester, module, category, comment)
+            ret = True
         
         if self.on_treeview_update:
             self.on_treeview_update()
+
+        return ret
 
     def get_last_tracking_information(self):
         '''gets the last tracking information
