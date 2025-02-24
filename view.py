@@ -699,7 +699,7 @@ class TimeTrackerGUI:
         try:
             self.chart = self.tracker.generate_chart(scope, self.active_chart)
         except ValueError:
-            messagebox.showerror("Error", "Chart could not be generated with the selected data1")
+            messagebox.showerror("Error", "Chart could not be generated with the selected data!")
             return
         
         self.chart.plot(self.plot_frame)
