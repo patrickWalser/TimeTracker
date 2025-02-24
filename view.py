@@ -236,7 +236,7 @@ class TimeTrackerGUI:
         # set name, planned end, num ECTS, hoursPerEcts
         # TODO: save the old tracker?
         new_window = tk.Toplevel(self.root)
-        new_window.title("New Study")
+        new_window.title("New Study" if edit == False else "Edit Study")
         # force window to be in foreground
         new_window.grab_set()
         new_window.transient(self.root)
