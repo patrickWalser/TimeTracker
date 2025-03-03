@@ -45,6 +45,8 @@ class TimeTrackerGUI:
         filemenu.add_command(label="New", command=lambda: self.new_study(edit=False))
         filemenu.add_command(label="Open", command=lambda: self.open_study())
         filemenu.add_command(label="Save as", command=lambda: self.save_as())
+        filemenu.add_separator()
+        filemenu.add_command(label = "Edit Settings", command = lambda: self.edit_settings())
         editmenu = Menu(menu)
         menu.add_cascade(label="Edit", menu=editmenu)
         editmenu.add_command(label="Edit Study", command=lambda: self.new_study(edit=True))
@@ -313,6 +315,36 @@ class TimeTrackerGUI:
         filename = tk.filedialog.asksaveasfilename(
             filetypes=data, defaultextension=data)
         self.save_data(filename)
+
+    def edit_settings(self):
+        '''edit the settings'''
+
+        new_window = tk.Toplevel(self.root)
+        new_window.title("Settings")
+        # force window to be in foreground
+        new_window.grab_set()
+        new_window.transient(self.root)
+
+        tk.Label(new_window, text="Default ECTS:").grid(row=0, column=0, sticky='w')
+        self.ects_var = tk.StringVar()
+        self.ects_entry = tk.Entry(new_window, textvariable=self.ects_var)
+        self.ects_entry.grid(row=0, column=1, sticky='w')
+        self.ects_var.set(self.tracker.settings.get("module_ECTS"))
+
+        tk.Label(new_window, text="Default Duration (weeks):").grid(row=1, column=0, sticky='w')
+        self.duration_var = tk.StringVar()
+        self.duration_entry = tk.Entry(new_window, textvariable=self.duration_var)
+        self.duration_entry.grid(row=1, column=1, sticky='w')
+        self.duration_var.set(self.tracker.settings.get("module_duration"))
+
+        tk.Button(new_window, text="Save", command=self.save_settings).grid(row=2, column=0, columnspan=2)
+
+    def save_settings(self):
+        ects = int(self.ects_var.get())
+        duration = int(self.duration_var.get())
+        self.tracker.settings.set("module_ECTS", ects)
+        self.tracker.settings.set("module_duration", duration)
+
     def edit_semesters(self):
         '''edit the semesters
         
@@ -586,13 +618,27 @@ class TimeTrackerGUI:
             self.module_end.grid(row=4, columnspan=4, sticky='w')
             self.module_end.set_datetime(mod.stop)
 
+        ects_label = tk.Label(edit_window, text="ECTS:")
+        ects_label.grid(row=5, column=0)
+        self.module_ects = tk.StringVar()
+        ects_entry = tk.Entry(edit_window, textvariable = self.module_ects)
+        ects_entry.grid(row=5, column=1)
+        self.module_ects.set(mod.ECTS)
+
+        duration_label = tk.Label(edit_window, text="Duration:")
+        duration_label.grid(row=6, column=0)
+        self.module_duration = tk.StringVar()
+        duration_entry = tk.Entry(edit_window, textvariable = self.module_duration)
+        duration_entry.grid(row=6, column=1)
+        self.module_duration.set((mod.plannedEnd - mod.start).days // 7)
+
         add_btn = tk.Button(edit_window, text="Save as new entry",
                             command=lambda: 
                             self.tracker.add_new_entry(
                                 self.sem_var.get(), self.mod_var.get(), 
                                 self.cat_var.get(), self.comment_var.get(), 
                                 self.start_time.get_datetime(), self.stop_time.get_datetime()))
-        add_btn.grid(row=5, column=0, sticky='news')
+        add_btn.grid(row=7, column=0, sticky='news')
         edit_btn = tk.Button(edit_window, text='Save entry',
                              command=lambda s=sem, m=mod, e=entry: 
                              self.tracker.edit_entry(
@@ -600,12 +646,12 @@ class TimeTrackerGUI:
                                 self.mod_var.get(), self.cat_var.get(), 
                                 self.comment_var.get(), self.start_time.get_datetime(), 
                                 self.stop_time.get_datetime(), self.module_start.get_datetime(), 
-                                self.module_end.get_datetime() if mod.stop != None else None))
-        edit_btn.grid(row=5, column=1, sticky='news')
+                                self.module_end.get_datetime() if mod.stop != None else None, self.module_ects.get(), self.module_duration.get()))
+        edit_btn.grid(row=7, column=1, sticky='news')
         remove_btn = tk.Button(edit_window, text='Delete entry',
                                command=lambda s=sem, m=mod, e=entry: 
                                self.tracker.remove_entry(s, m, e))
-        remove_btn.grid(row=5, column=2, sticky='news')
+        remove_btn.grid(row=7, column=2, sticky='news')
 
  # TODO: testing
     def generate_accordion(self, parent):

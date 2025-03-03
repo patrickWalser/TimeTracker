@@ -85,12 +85,12 @@ class Module:
     Holds a list of Entries.
     '''
 
-    def __init__(self, name, ECTS=5, duration=6):
+    def __init__(self, name, ECTS=0, duration=0):
         '''creates and starts the module.
 
         name: name of the module as string
-        ECTS: amount of ECTS (credits) default = 5
-        duration: planned duration of the module default = 6 weeks
+        ECTS: amount of ECTS (credits) default = 0
+        duration: planned duration of the module default = 0 weeks
         '''
         self.id = str(uuid.uuid4())
         self.entries = []
@@ -119,8 +119,15 @@ class Module:
         duration: planned duration of the module in weeks
         '''
         self.start = datetime.datetime.now()
-        self.plannedEnd = self.start + datetime.timedelta(weeks=duration)
+        self.set_plannedEnd(duration)
         self.stop = None
+
+    def set_plannedEnd(self, duration):
+        '''sets the planned end of the module
+        
+        duration: planned duration of the module in weeks
+        '''
+        self.plannedEnd = self.start + datetime.timedelta(weeks=duration)
 
     def add_entry(self, category, comment=""):
         '''creates an entry and adds it to the list of entries

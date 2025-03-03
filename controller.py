@@ -43,6 +43,11 @@ class TimeTracker:
             semesterName=semesterName, moduleName=moduleName,
             category=category, comment=comment)
         
+        if self.current_module.ECTS == 0:
+            self.current_module.ECTS = self.settings.get("module_ECTS")
+        if self.current_module.plannedEnd == self.current_module.start:
+            self.current_module.set_plannedEnd(self.settings.get("module_duration"))
+
         self._start_timer()
 
     def stop_tracking(self):
@@ -259,6 +264,11 @@ class TimeTracker:
         sem, mod, entry = self._study.add_entry(semester_name, module_name, category, comment)
         entry.start_time = start_time
         entry.stop_time = stop_time
+
+        if mod.ECTS == 0:
+            mod.ECTS = self.settings.get("module_ECTS")
+        if mod.plannedEnd == mod.start:
+            mod.set_plannedEnd(self.settings.get("module_duration"))
         
         if self.on_treeview_update:
             self.on_treeview_update()
@@ -277,7 +287,7 @@ class TimeTracker:
         if self.on_treeview_update:
             self.on_treeview_update()
 
-    def edit_entry(self, semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_start, edit_module_stop):
+    def edit_entry(self, semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_start, edit_module_stop, edit_module_ects, edit_module_duration):
         '''edits an entry
         
         removes the old entry and adds a new one with the new information
@@ -295,6 +305,9 @@ class TimeTracker:
         '''
         s,m,e = self.add_new_entry(edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time)
         m.start = edit_module_start
+        m.ECTS = int(edit_module_ects)
+        m.set_plannedEnd(int(edit_module_duration))
+
         if edit_module_stop is not None:
             m.stop = edit_module_stop
         

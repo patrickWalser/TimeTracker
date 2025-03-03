@@ -53,6 +53,8 @@ class TimeTrackerUnitTest(unittest.TestCase):
 
         self.assertEqual(first=timeTracker.current_entry, second=mod.entries[0],
                          msg="Entry which was started is not current entry")
+        self.assertEqual(first=timeTracker.current_module.plannedEnd, second = timeTracker.current_module.start + datetime.timedelta(weeks=6),
+                         msg="Planned end of module is not 6 weeks after start time of entry")
 
     def test_stop_tracking(self):
         '''test stopping the tracking'''
@@ -246,8 +248,10 @@ class TimeTrackerUnitTest(unittest.TestCase):
         edit_stop_time = datetime.datetime.now()
         edit_module_start = datetime.datetime.now()
         edit_module_stop = datetime.datetime.now()
+        edit_ects = 3
+        edit_duration = 3
 
-        timeTracker.edit_entry(semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_start, edit_module_stop)
+        timeTracker.edit_entry(semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_start, edit_module_stop, edit_ects, edit_duration)
         
         self.assertEqual(len(module.entries), 0)
         new_semester = timeTracker.get_semester(edit_semester_name)
@@ -260,6 +264,8 @@ class TimeTrackerUnitTest(unittest.TestCase):
         self.assertEqual(new_entry.stop_time, edit_stop_time)
         self.assertEqual(new_module.start, edit_module_start)
         self.assertEqual(new_module.stop, edit_module_stop)
+        self.assertEqual(new_module.ECTS, edit_ects)
+        self.assertEqual(new_module.plannedEnd, edit_start_time + datetime.timedelta(weeks=3))
 
     def test_get_burndown_chart_data_study(self):
         '''test the _get_burndown_chart_data method for Study scope'''

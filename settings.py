@@ -9,7 +9,9 @@ class Settings:
         '''
         self.filename = filename
         self.settings = {
-            "last_filename": None
+            "last_filename": None,
+            "module_ECTS": 5,
+            "module_duration": 6
         }
         self.load_settings()
 

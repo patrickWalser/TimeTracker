@@ -124,7 +124,7 @@ class UnitTestModule(unittest.TestCase):
                                delta=datetime.timedelta(seconds=1))
 
         self.assertEqual(first=mod.plannedEnd,
-                         second=mod.start + datetime.timedelta(weeks=6),
+                         second=mod.start,
                          msg="planned end was net set correctly")
 
         self.assertTrue(len(mod.entries) == 0, msg="entry list is not empty")
@@ -161,6 +161,18 @@ class UnitTestModule(unittest.TestCase):
         values = [0, 1, 100]
         for n_weeks in values:
             mod.start_module(duration=n_weeks)
+            self.assertEqual(
+                first=mod.plannedEnd,
+                second=mod.start + datetime.timedelta(weeks=n_weeks),
+                msg="Planned end was not stet to start + duration")
+
+    def test_set_plannedEnd(self):
+        '''test the set_plannedEnd function'''
+        mod = model.Module("test")
+
+        values = [0, 1, 100]
+        for n_weeks in values:
+            mod.set_plannedEnd(duration=n_weeks)
             self.assertEqual(
                 first=mod.plannedEnd,
                 second=mod.start + datetime.timedelta(weeks=n_weeks),
