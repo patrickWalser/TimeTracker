@@ -253,6 +253,7 @@ class TimeTrackerGUI:
 
         self.plannedEnd = DateTimeFrame(new_window, "Planned end")
         self.plannedEnd.grid(row=2, column=0)
+        self.plannedEnd.initialize_date_entry()
 
         if edit:
             ects,hours,plannedEnd = self.tracker.get_study_parameters()
