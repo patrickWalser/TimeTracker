@@ -653,6 +653,15 @@ class TimeTrackerGUI:
                                self.tracker.remove_entry(s, m, e))
         remove_btn.grid(row=7, column=2, sticky='news')
 
+        edit_window.after(800, lambda end=mod.stop:self.init_edit_entry_data(end))
+
+    def init_edit_entry_data(self, end):
+        self.start_time.initialize_date_entry()
+        self.stop_time.initialize_date_entry()
+        self.module_start.initialize_date_entry()
+        if end != None:
+            self.module_end.initialize_date_entry()
+
  # TODO: testing
     def generate_accordion(self, parent):
         '''generate an accordion
