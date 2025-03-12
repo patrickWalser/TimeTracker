@@ -253,7 +253,6 @@ class TimeTrackerGUI:
 
         self.plannedEnd = DateTimeFrame(new_window, "Planned end")
         self.plannedEnd.grid(row=2, column=0)
-        self.plannedEnd.initialize_date_entry()
 
         if edit:
             ects,hours,plannedEnd = self.tracker.get_study_parameters()
@@ -266,9 +265,13 @@ class TimeTrackerGUI:
 
         self.btn_new_tracker_save = tk.Button(
             new_window, text='save', command=lambda window=new_window: save_cmd(window)).grid(row=3, column=0)
-        # TODO: remove that button
-        #self.btn_new_tracker_abort = tk.Button(
-         #   new_window, text='abort', command=lambda: print("abort"))
+
+        # set position of the window
+        center_x, center_y = self.get_center_position(new_window)
+        new_window.geometry(f"+{center_x}+{center_y}")
+
+        self.root.after(800, lambda plannedEnd = self.plannedEnd: plannedEnd.initialize_date_entry())
+
 
 # TODO: call save_as after creating the tracker?
     def save_new_study(self, window):
@@ -340,6 +343,10 @@ class TimeTrackerGUI:
 
         tk.Button(new_window, text="Save", command=self.save_settings).grid(row=2, column=0, columnspan=2)
 
+        # set position of the window
+        center_x, center_y = self.get_center_position(new_window)
+        new_window.geometry(f"+{center_x}+{center_y}")
+
     def save_settings(self):
         ects = int(self.ects_var.get())
         duration = int(self.duration_var.get())
@@ -382,6 +389,10 @@ class TimeTrackerGUI:
 
         # bind doubleClick on cell
         self.edit_semester_tree.bind("<Double-1>", lambda event, window = new_window : self.edit_semester_on_double_click(event, window))
+
+        # set position of the window
+        center_x, center_y = self.get_center_position(new_window)
+        new_window.geometry(f"+{center_x}+{center_y}")
 
     def edit_semester_on_double_click(self, event, parent):
         '''edit the semester on double click
@@ -654,6 +665,10 @@ class TimeTrackerGUI:
                                self.tracker.remove_entry(s, m, e))
         remove_btn.grid(row=7, column=2, sticky='news')
 
+        # set potition of the window
+        center_x, center_y = self.get_center_position(edit_window)
+        edit_window.geometry(f"+{center_x}+{center_y}")
+
         edit_window.after(800, lambda end=mod.stop:self.init_edit_entry_data(end))
 
     def init_edit_entry_data(self, end):
@@ -760,6 +775,22 @@ class TimeTrackerGUI:
         
         self.chart.plot(self.plot_frame)
 
+    def get_center_position(self, window):
+        '''get the center position of the window using the geometry of the root window'''
+        root_x = self.root.winfo_x()
+        root_y = self.root.winfo_y()
+        root_width = self.root.winfo_width()
+        root_height = self.root.winfo_height()
+
+        window.update_idletasks()
+        window_width = window.winfo_width()
+        window_height = window.winfo_height()
+
+        center_x = root_x + (root_width // 2) - (window_width // 2)
+        center_y = root_y + (root_height // 2) - (window_height // 2)
+
+        return center_x, center_y
+    
     def save_data(self, filename=None):
         '''saves the data
 
