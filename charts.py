@@ -74,7 +74,7 @@ class BurndownChart(Chart):
             remaining -= ects
             self.remaining_work.append(remaining)
 
-        plan_days = max((planned_end - date_lst[0]).days,1)
+        plan_days = max((planned_end - date_lst[0]).days, 1)
         self.plan_x = [
             date_lst[0] + datetime.timedelta(days=i) for i in range(plan_days + 1)]
         self.plan_y = [
@@ -166,11 +166,11 @@ class ChartFactory:
     @staticmethod
     def create_chart(chart_type, *args, **kwargs):
         ''' create a chart
-        
+
         chart_type: the type of the chart
         *args: arguments for the chart
         **kwargs: keyword arguments for the chart
-        
+
         returns: the chart object
         '''
         if chart_type == ChartType.BURNDOWN:

@@ -3,6 +3,7 @@ import os
 import json
 from settings import Settings
 
+
 class TestSettings(unittest.TestCase):
     def setUp(self):
         self.test_filename = 'test_settings.json'
@@ -35,6 +36,7 @@ class TestSettings(unittest.TestCase):
         # Check if default settings were saved
         self.assertTrue(os.path.exists(self.test_filename))
         self.assertEqual(self.settings.get("last_filename"), None)
+
 
 if __name__ == '__main__':
     unittest.main()

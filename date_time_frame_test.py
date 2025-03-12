@@ -3,6 +3,7 @@ import tkinter as tk
 from date_time_frame import DateTimeFrame
 import datetime
 
+
 class TestDateTimeFrame(unittest.TestCase):
 
     def setUp(self):
@@ -15,11 +16,14 @@ class TestDateTimeFrame(unittest.TestCase):
     def test_initialization(self):
         ''' test the initialization of the DateTimeFrame '''
         self.assertEqual(self.frame.get_datetime(), None)
-        self.assertEqual(self.frame.winfo_children()[0].cget("text"), "Test Label")
+        self.assertEqual(self.frame.winfo_children()[
+                         0].cget("text"), "Test Label")
         self.assertEqual(self.frame.winfo_children()[1].cget("text"), "Date:")
         self.assertEqual(self.frame.winfo_children()[3].cget("text"), "Time:")
-        self.assertEqual(self.frame.hour_entry['values'], tuple(f"{i:02}" for i in range(24)))
-        self.assertEqual(self.frame.minute_entry['values'], tuple(f"{i:02}" for i in range(60)))
+        self.assertEqual(self.frame.hour_entry['values'], tuple(
+            f"{i:02}" for i in range(24)))
+        self.assertEqual(self.frame.minute_entry['values'], tuple(
+            f"{i:02}" for i in range(60)))
 
     def test_initialize_date_entry(self):
         ''' test the initialize_date_entry method '''
@@ -29,9 +33,9 @@ class TestDateTimeFrame(unittest.TestCase):
 
     def test_set_datetime(self):
         ''' test the set_datetime method '''
-        #self.frame.set_datetime(None)
         self.frame.initialize_date_entry()
-        self.assertEqual(self.frame.get_datetime().date(), datetime.datetime.now().date())
+        self.assertEqual(self.frame.get_datetime().date(),
+                         datetime.datetime.now().date())
         self.assertEqual(self.frame.hour_entry.get(), "")
         self.assertEqual(self.frame.minute_entry.get(), "")
 
@@ -52,6 +56,7 @@ class TestDateTimeFrame(unittest.TestCase):
         self.frame.set_datetime(test_datetime)
         result = self.frame.get_datetime()
         self.assertEqual(result, test_datetime)
+
 
 if __name__ == '__main__':
     unittest.main()

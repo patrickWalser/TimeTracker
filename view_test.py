@@ -6,11 +6,14 @@ from view import TimeTrackerGUI
 import datetime
 import os
 from unittest.mock import patch
+
+
 class TimeTrackerGUITest(unittest.TestCase):
 
     def setUp(self):
         # Setup for GUI-Tests
-        self.study = Study(ECTS=180, hoursPerECTS=30, plannedEnd=datetime.datetime.now())
+        self.study = Study(ECTS=180, hoursPerECTS=30,
+                           plannedEnd=datetime.datetime.now())
         self.tracker = TimeTracker(self.study)
         self.root = tk.Tk()
         self.root.withdraw()
@@ -30,13 +33,14 @@ class TimeTrackerGUITest(unittest.TestCase):
         self.assertEqual(self.gui.start_stop_btn.cget("text"), "Stop")
         self.assertTrue(self.tracker.current_entry is not None)
         print(self.gui.current_duration_label["text"])
-        #self.assertTrue(self.gui.current_duration_label.cget("text").startswith("Tracking for"))
+        # self.assertTrue(self.gui.current_duration_label.cget("text").startswith("Tracking for"))
 
         # Simulate stopping the tracking
         self.gui.btn_start_stop_click()  # Stop Tracking
         self.assertEqual(self.gui.start_stop_btn.cget("text"), "Start")
         self.assertTrue(self.tracker.current_entry is None)
-        self.assertFalse(self.gui.current_duration_label.winfo_ismapped())  # Label invisible
+        # Label invisible
+        self.assertFalse(self.gui.current_duration_label.winfo_ismapped())
 
     def test_new_study(self):
         self.gui.new_study(edit=False)

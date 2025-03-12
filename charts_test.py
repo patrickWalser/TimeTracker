@@ -3,6 +3,7 @@ import datetime
 from charts import BurndownChart, PieChart
 import tkinter as tk
 
+
 class TestBurndownChart(unittest.TestCase):
 
     def setUp(self):
@@ -16,11 +17,14 @@ class TestBurndownChart(unittest.TestCase):
         self.root.destroy()
 
     def test_init(self):
-        chart = BurndownChart("title", self.dates, self.work_lst, self.total_work, self.planned_end)
+        chart = BurndownChart("title", self.dates,
+                              self.work_lst, self.total_work, self.planned_end)
 
         expected_remaining_work = [90, 80, 70, 60, 50, 40, 30, 20, 10, 0]
-        expected_plan_x = [self.dates[0] + datetime.timedelta(days=i) for i in range(10)]
-        expected_plan_y = [self.total_work - (self.total_work / 9) * i for i in range(10)]
+        expected_plan_x = [self.dates[0] +
+                           datetime.timedelta(days=i) for i in range(10)]
+        expected_plan_y = [self.total_work -
+                           (self.total_work / 9) * i for i in range(10)]
         expected_interval = 1  # 10 days / 10 ticks
 
         self.assertEqual(chart.title, "title")
@@ -30,7 +34,8 @@ class TestBurndownChart(unittest.TestCase):
         self.assertEqual(chart.interval, expected_interval)
 
     def test_plot(self):
-        chart = BurndownChart("title", self.dates, self.work_lst, self.total_work, self.planned_end)
+        chart = BurndownChart("title", self.dates,
+                              self.work_lst, self.total_work, self.planned_end)
         frame = tk.Frame(self.root)
         chart.plot(frame)
         self.assertIsNotNone(chart.figure)
@@ -41,13 +46,13 @@ class TestBurndownChart(unittest.TestCase):
         chart.destroy()
         frame.destroy()
 
+
 class TestPieChartPlot(unittest.TestCase):
 
     def setUp(self):
         self.root = tk.Tk()
         self.labels = ['Apples', 'Bananas', 'Cherries', 'Dates']
         self.sizes = [15, 30, 45, 10]
-        #self.chart = PieChart(self.labels, self.sizes)
 
     def tearDown(self):
         self.root.destroy()
@@ -57,20 +62,20 @@ class TestPieChartPlot(unittest.TestCase):
         labels = []
         sizes = []
         with self.assertRaises(ValueError) as context:
-            PieChart("",labels, sizes)
+            PieChart("", labels, sizes)
         self.assertEqual(str(context.exception), "sum of sizes is zero")
 
         # sum of sizes is zero
         labels = ['Apples', 'Bananas', 'Cherries', 'Dates']
         sizes = [0, 0, 0, 0]
         with self.assertRaises(ValueError) as context:
-            PieChart("",labels, sizes)
+            PieChart("", labels, sizes)
         self.assertEqual(str(context.exception), "sum of sizes is zero")
 
-        #valid data
+        # valid data
         labels = ['Apples', 'Bananas', 'Cherries', 'Dates']
         sizes = [15, 30, 45, 10]
-        chart = PieChart("title",labels, sizes)
+        chart = PieChart("title", labels, sizes)
 
         expected_rel_sizes = [15.0, 30.0, 45.0, 10.0]
         self.assertEqual(chart.title, "title")
@@ -83,10 +88,11 @@ class TestPieChartPlot(unittest.TestCase):
         chart.plot(frame)
         self.assertIsNotNone(chart.figure)
         self.assertEqual(chart.figure.axes[0].get_title(), 'title')
-        
-        expected_labels =[]
-        for i in range(0,len(self.labels)):
-            expected_labels.append(self.labels[i] + ' - ' + '{:.1f}%'.format(self.sizes[i]))
+
+        expected_labels = []
+        for i in range(0, len(self.labels)):
+            expected_labels.append(
+                self.labels[i] + ' - ' + '{:.1f}%'.format(self.sizes[i]))
 
         l = chart.figure.axes[0].legend_.texts
         labels = []
@@ -98,6 +104,7 @@ class TestPieChartPlot(unittest.TestCase):
         chart.destroy()
         frame.destroy()
 
+
 class TestChart(unittest.TestCase):
 
     def setUp(self):
@@ -107,11 +114,13 @@ class TestChart(unittest.TestCase):
         self.root.destroy()
 
     def test_destroy(self):
-        chart = BurndownChart("title",[datetime.date(2024, 6, 1), datetime.date(2024, 6, 2)], [10,10], 20, datetime.date.today())
+        chart = BurndownChart("title", [datetime.date(2024, 6, 1), datetime.date(
+            2024, 6, 2)], [10, 10], 20, datetime.date.today())
         frame = tk.Frame(self.root)
         chart.plot(frame)
 
         close_event = False
+
         def mock_on_close(event):
             nonlocal close_event
             close_event = True
@@ -122,6 +131,7 @@ class TestChart(unittest.TestCase):
         # Assert that the close event was called
         self.assertTrue(close_event)
         frame.destroy()
+
 
 if __name__ == '__main__':
     unittest.main()

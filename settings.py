@@ -1,6 +1,7 @@
 import json
 import os
 
+
 class Settings:
     def __init__(self, filename='settings.json'):
         ''' init a settings object

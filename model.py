@@ -1,6 +1,7 @@
 import uuid
 import datetime
 
+
 class Entry:
     '''Class Entry holds the information of an entry'''
 
@@ -50,7 +51,7 @@ class Entry:
 
     def to_json(self):
         '''converts the entry to a json object
-        
+
         return: json representation of the entry
         '''
         return {
@@ -64,18 +65,20 @@ class Entry:
     @classmethod
     def from_json(cls, data):
         '''creates an Entry object from a json object
-        
+
         data: json object
-        
+
         returns: Entry object
         '''
-        entry =  cls(
+        entry = cls(
             category=data["category"],
             comment=data["comment"],
         )
-        entry.id=data["id"]
-        entry.start_time=datetime.datetime.fromisoformat(data["start_time"]) if data["start_time"] else None
-        entry.stop_time=datetime.datetime.fromisoformat(data["stop_time"]) if data["stop_time"] else None
+        entry.id = data["id"]
+        entry.start_time = datetime.datetime.fromisoformat(
+            data["start_time"]) if data["start_time"] else None
+        entry.stop_time = datetime.datetime.fromisoformat(
+            data["stop_time"]) if data["stop_time"] else None
         return entry
 
 
@@ -124,7 +127,7 @@ class Module:
 
     def set_plannedEnd(self, duration):
         '''sets the planned end of the module
-        
+
         duration: planned duration of the module in weeks
         '''
         self.plannedEnd = self.start + datetime.timedelta(weeks=duration)
@@ -187,10 +190,10 @@ class Module:
         lst = [e.category for e in self.entries]
         dictionary = dict.fromkeys(lst)
         return list(dictionary)
-    
+
     def to_json(self):
         '''converts the module to a json object
-        
+
         returns: json representation of the module (including its entries)
         '''
         return {
@@ -206,9 +209,9 @@ class Module:
     @classmethod
     def from_json(cls, data):
         '''creates a Module object from a json object
-        
+
         data: json object
-        
+
         returns: Module object
         '''
         module = cls(
@@ -216,10 +219,13 @@ class Module:
             ECTS=data["ECTS"],
         )
         module.entries = [Entry.from_json(entry) for entry in data["entries"]]
-        module.id=data["id"]
-        module.start=datetime.datetime.fromisoformat(data["start"]) if data["start"] else None
-        module.stop=datetime.datetime.fromisoformat(data["stop"]) if data["stop"] else None
-        module.plannedEnd=datetime.datetime.fromisoformat(data["plannedEnd"]) if data["plannedEnd"] else None
+        module.id = data["id"]
+        module.start = datetime.datetime.fromisoformat(
+            data["start"]) if data["start"] else None
+        module.stop = datetime.datetime.fromisoformat(
+            data["stop"]) if data["stop"] else None
+        module.plannedEnd = datetime.datetime.fromisoformat(
+            data["plannedEnd"]) if data["plannedEnd"] else None
         return module
 
 
@@ -229,9 +235,9 @@ class Semester:
     Holds a list of modules
     '''
 
-    def __init__(self, name, ECTS = 0, plannedEnd = None):
+    def __init__(self, name, ECTS=0, plannedEnd=None):
         '''creates the semester
-        
+
         name: the name of the semester
         ECTS: amount of ECTS in the semester
         plannedEnd: the plannedEnd of the semester
@@ -340,7 +346,7 @@ class Semester:
                     cat_lst.append(cat)
         cat_dict = dict.fromkeys(cat_lst)
         return list(cat_dict)
-    
+
     def to_json(self):
         '''converts the semester to a json object
 
@@ -357,18 +363,20 @@ class Semester:
     @classmethod
     def from_json(cls, data):
         '''creates a Semester object from a json object 
-        
+
         data: json object
-        
+
         returns: Semester object
         '''
         semester = cls(
             name=data["name"],
             ECTS=data["ECTS"],
-            plannedEnd=datetime.datetime.fromisoformat(data["plannedEnd"]) if data["plannedEnd"] else None
+            plannedEnd=datetime.datetime.fromisoformat(
+                data["plannedEnd"]) if data["plannedEnd"] else None
         )
-        semester.id=data["id"]
-        semester.modules = [Module.from_json(module) for module in data["modules"]]
+        semester.id = data["id"]
+        semester.modules = [Module.from_json(
+            module) for module in data["modules"]]
         return semester
 
 
@@ -491,7 +499,7 @@ class Study:
         returns list of categories'''
         cat_lst = []
         mod_lst = self.get_modules(semName)
-        
+
         for mod in mod_lst:
             if modName in mod.name:
                 cat_lst.extend(mod.get_categories())
@@ -519,7 +527,7 @@ class Study:
 
     def to_json(self):
         '''converts the study to a json object
-        
+
         returns: json representation of the study (including its semesters)
         '''
         return {
@@ -535,18 +543,23 @@ class Study:
     @classmethod
     def from_json(cls, data):
         '''creates a Study object from a json object
-        
+
         data: json object
-        
+
         returns: Study object
         '''
         study = cls(
             ECTS=data["ECTS"],
             hoursPerECTS=data["hoursPerECTS"],
-            plannedEnd=datetime.datetime.fromisoformat(data["plannedEnd"]) if data["plannedEnd"] else None,
+            plannedEnd=datetime.datetime.fromisoformat(
+                data["plannedEnd"]) if data["plannedEnd"] else None,
         )
-        study.semesters = [Semester.from_json(semester) for semester in data["semesters"]]
-        study.last_semester=Semester.from_json(data["last_semester"]) if data["last_semester"] != None else None
-        study.last_module=Module.from_json(data["last_module"]) if data["last_module"] != None else None
-        study.last_entry=Entry.from_json(data["last_entry"]) if data["last_entry"] != None else None
+        study.semesters = [Semester.from_json(
+            semester) for semester in data["semesters"]]
+        study.last_semester = Semester.from_json(
+            data["last_semester"]) if data["last_semester"] != None else None
+        study.last_module = Module.from_json(
+            data["last_module"]) if data["last_module"] != None else None
+        study.last_entry = Entry.from_json(
+            data["last_entry"]) if data["last_entry"] != None else None
         return study

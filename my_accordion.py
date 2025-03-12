@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 
+
 class Accordion_Element(ttk.Frame):
     '''Is an Element in an Accordion
 
@@ -141,9 +142,10 @@ class Accordion_Element(ttk.Frame):
         self.sub_elements.append(e)
         self.accordion.update_canvas_width()
         return e
+
     def remove_element(self, element):
         ''' remove a sub_element
-        
+
         updates the accordion width
 
         element: the Accordion_Element to remove
@@ -248,7 +250,7 @@ class Accordion(ttk.Frame):
 
     def remove_section(self, section):
         ''' remove an element
-        
+
         updates the accordion width
 
         section: the Accordion_Element to remove
@@ -324,7 +326,6 @@ if __name__ == "__main__":
     frame.grid(row=0, sticky='news')
     accordion = Accordion(frame)
     accordion.grid(row=0, column=0, sticky='ns')
-    # accordion.pack(fill='both', expand=True)
 
     # Example elements with multiple levels
     s = accordion.add_section("Section 1", lambda: print("Section 1 clicked"))

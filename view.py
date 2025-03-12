@@ -1,4 +1,5 @@
 from my_accordion import Accordion
+from controller import TimeTracker
 import tkinter as tk
 from tkinter import messagebox, ttk, Frame, Menu
 from charts import ChartType
@@ -12,7 +13,7 @@ class TimeTrackerGUI:
     Handles all necessary events.
     '''
 
-    def __init__(self, root, tracker):
+    def __init__(self, root, tracker: TimeTracker):
         '''constructor of the UI
 
         initializes the UI, loads stored data, starts new tracker if needed
@@ -24,8 +25,6 @@ class TimeTrackerGUI:
 
         self.setup_menu()
         self.setup_views()
-       
-        # TODO: analyse_btn print chart is this correct or should load_data be called first?
 
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         self.root.after(0, self.initial_load)
@@ -42,15 +41,19 @@ class TimeTrackerGUI:
         self.root.config(menu=menu)
         filemenu = Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New", command=lambda: self.new_study(edit=False))
+        filemenu.add_command(
+            label="New", command=lambda: self.new_study(edit=False))
         filemenu.add_command(label="Open", command=lambda: self.open_study())
         filemenu.add_command(label="Save as", command=lambda: self.save_as())
         filemenu.add_separator()
-        filemenu.add_command(label = "Edit Settings", command = lambda: self.edit_settings())
+        filemenu.add_command(label="Edit Settings",
+                             command=lambda: self.edit_settings())
         editmenu = Menu(menu)
         menu.add_cascade(label="Edit", menu=editmenu)
-        editmenu.add_command(label="Edit Study", command=lambda: self.new_study(edit=True))
-        editmenu.add_command(label="Edit Semesters", command=lambda: self.edit_semesters())
+        editmenu.add_command(label="Edit Study",
+                             command=lambda: self.new_study(edit=True))
+        editmenu.add_command(label="Edit Semesters",
+                             command=lambda: self.edit_semesters())
 
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
@@ -85,7 +88,7 @@ class TimeTrackerGUI:
             command=lambda: [analyse_view.tkraise(),
                              self.generate_accordion(analyse_view),
                              self.print_chart(self.tracker._study)]).grid(row=0, column=1)
-        
+
         self.setup_tracker_view(tracker_view)
         self.setup_analyze_view(analyse_view)
 
@@ -175,7 +178,7 @@ class TimeTrackerGUI:
         self.yscroll.pack(side='right', fill='y')
 
         self.treeview_frame.grid(row=2, columnspan=8, sticky='news')
-    
+
     def setup_analyze_view(self, analyze_view):
         '''setup the analyze view
 
@@ -191,10 +194,10 @@ class TimeTrackerGUI:
         chart_frame_header = tk.Frame(self.chart_frame)
         chart_frame_header.grid(row=0, sticky='nw')
         self.btn_burndown = tk.Button(chart_frame_header, text="Burndown-Chart",
-                                 command=lambda: (self.set_active_chart(ChartType.BURNDOWN), self.format_buttons(ChartType.BURNDOWN)))
+                                      command=lambda: (self.set_active_chart(ChartType.BURNDOWN), self.format_buttons(ChartType.BURNDOWN)))
         self.btn_burndown.grid(row=0, column=0, sticky='nw')
         self.btn_pie = tk.Button(chart_frame_header, text="Pie-Chart",
-                            command=lambda: (self.set_active_chart(ChartType.PIE), self.format_buttons(ChartType.PIE)))
+                                 command=lambda: (self.set_active_chart(ChartType.PIE), self.format_buttons(ChartType.PIE)))
         self.btn_pie.grid(row=0, column=1, sticky='nw')
 
         self.plot_frame = tk.Frame(self.chart_frame)
@@ -202,7 +205,7 @@ class TimeTrackerGUI:
 
     def setup_observers(self):
         '''register observers'''
-        
+
         self.tracker.on_status_change = self.update_tracking_label
         self.tracker.on_treeview_update = self.update_treeview
 
@@ -232,11 +235,9 @@ class TimeTrackerGUI:
 # Commands for the filemenu
     def new_study(self, edit):
         '''opens a window to create a new tracker
-        
+
         edit: if the existing tracker should be edited
         '''
-        # set name, planned end, num ECTS, hoursPerEcts
-        # TODO: save the old tracker?
         new_window = tk.Toplevel(self.root)
         new_window.title("New Study" if edit == False else "Edit Study")
         # force window to be in foreground
@@ -245,17 +246,19 @@ class TimeTrackerGUI:
 
         tk.Label(new_window, text="Total Amount of ECTS").grid(row=0, column=0)
         self.ECTS_var = tk.StringVar()
-        ECTS_entry = tk.Entry(new_window, textvariable=self.ECTS_var).grid(row=0, column=1)
+        ECTS_entry = tk.Entry(
+            new_window, textvariable=self.ECTS_var).grid(row=0, column=1)
 
         tk.Label(new_window, text="Hours per ECTS").grid(row=1, column=0)
         self.hoursPerECTS_var = tk.StringVar()
-        hoursPerECTS_entry = tk.Entry(new_window, textvariable=self.hoursPerECTS_var).grid(row=1, column=1)
+        hoursPerECTS_entry = tk.Entry(
+            new_window, textvariable=self.hoursPerECTS_var).grid(row=1, column=1)
 
         self.plannedEnd = DateTimeFrame(new_window, "Planned end")
         self.plannedEnd.grid(row=2, column=0)
 
         if edit:
-            ects,hours,plannedEnd = self.tracker.get_study_parameters()
+            ects, hours, plannedEnd = self.tracker.get_study_parameters()
             self.ECTS_var.set(ects)
             self.hoursPerECTS_var.set(hours)
             self.plannedEnd.set_datetime(plannedEnd)
@@ -270,29 +273,28 @@ class TimeTrackerGUI:
         center_x, center_y = self.get_center_position(new_window)
         new_window.geometry(f"+{center_x}+{center_y}")
 
-        self.root.after(800, lambda plannedEnd = self.plannedEnd: plannedEnd.initialize_date_entry())
+        self.root.after(
+            800, lambda plannedEnd=self.plannedEnd: plannedEnd.initialize_date_entry())
 
-
-# TODO: call save_as after creating the tracker?
     def save_new_study(self, window):
         '''create the study and save it
-        
+
         destroys the window
-        
+
         window: the window which is displayed
         '''
         self.chart_scope = self.tracker.create_new_study(
-            int(self.ECTS_var.get()), 
-            int(self.hoursPerECTS_var.get()), 
+            int(self.ECTS_var.get()),
+            int(self.hoursPerECTS_var.get()),
             self.plannedEnd.get_datetime()
         )
         window.destroy()
 
         self.save_as()
-    
+
     def save_study(self, window):
         '''save an edited study
-        
+
         destroys the window
 
         window: the window which is displayed
@@ -329,19 +331,23 @@ class TimeTrackerGUI:
         new_window.grab_set()
         new_window.transient(self.root)
 
-        tk.Label(new_window, text="Default ECTS:").grid(row=0, column=0, sticky='w')
+        tk.Label(new_window, text="Default ECTS:").grid(
+            row=0, column=0, sticky='w')
         self.ects_var = tk.StringVar()
         self.ects_entry = tk.Entry(new_window, textvariable=self.ects_var)
         self.ects_entry.grid(row=0, column=1, sticky='w')
         self.ects_var.set(self.tracker.settings.get("module_ECTS"))
 
-        tk.Label(new_window, text="Default Duration (weeks):").grid(row=1, column=0, sticky='w')
+        tk.Label(new_window, text="Default Duration (weeks):").grid(
+            row=1, column=0, sticky='w')
         self.duration_var = tk.StringVar()
-        self.duration_entry = tk.Entry(new_window, textvariable=self.duration_var)
+        self.duration_entry = tk.Entry(
+            new_window, textvariable=self.duration_var)
         self.duration_entry.grid(row=1, column=1, sticky='w')
         self.duration_var.set(self.tracker.settings.get("module_duration"))
 
-        tk.Button(new_window, text="Save", command=self.save_settings).grid(row=2, column=0, columnspan=2)
+        tk.Button(new_window, text="Save", command=self.save_settings).grid(
+            row=2, column=0, columnspan=2)
 
         # set position of the window
         center_x, center_y = self.get_center_position(new_window)
@@ -355,7 +361,7 @@ class TimeTrackerGUI:
 
     def edit_semesters(self):
         '''edit the semesters
-        
+
         callback for the editmenu to set the number of ECTS and the planned end
         of the semesters.
         '''
@@ -367,7 +373,8 @@ class TimeTrackerGUI:
         new_window.transient(self.root)
 
         # create Treeview
-        self.edit_semester_tree = ttk.Treeview(new_window, columns=("Semester", "ECTS", "plannedEnd"), show="headings")
+        self.edit_semester_tree = ttk.Treeview(new_window, columns=(
+            "Semester", "ECTS", "plannedEnd"), show="headings")
         self.edit_semester_tree.heading("Semester", text="Semester")
         self.edit_semester_tree.heading("ECTS", text="ECTS")
         self.edit_semester_tree.heading("plannedEnd", text="plannedEnd")
@@ -383,12 +390,14 @@ class TimeTrackerGUI:
             sem_serial = self.tracker.get_object_id(sem)
 
             date = sem.plannedEnd.strftime('%Y-%m-%d')
-            self.edit_semester_tree.insert("", "end", values=(sem.name, sem.ECTS, date), tags=sem_serial)
+            self.edit_semester_tree.insert("", "end", values=(
+                sem.name, sem.ECTS, date), tags=sem_serial)
 
         self.edit_semester_tree.pack(fill=tk.BOTH, expand=True)
 
         # bind doubleClick on cell
-        self.edit_semester_tree.bind("<Double-1>", lambda event, window = new_window : self.edit_semester_on_double_click(event, window))
+        self.edit_semester_tree.bind(
+            "<Double-1>", lambda event, window=new_window: self.edit_semester_on_double_click(event, window))
 
         # set position of the window
         center_x, center_y = self.get_center_position(new_window)
@@ -396,7 +405,7 @@ class TimeTrackerGUI:
 
     def edit_semester_on_double_click(self, event, parent):
         '''edit the semester on double click
-        
+
         places an entry over the double clicked cell to edit the value
         saves on return, focus out or window close
 
@@ -427,9 +436,12 @@ class TimeTrackerGUI:
             self.double_click_entry.focus()
 
             # events to finish editing
-            self.double_click_entry.bind("<Return>", lambda event: self.edit_semester_save(item, itemID, col_index, parent))
-            self.double_click_entry.bind("<FocusOut>", lambda event: self.edit_semester_save(item, itemID, col_index, parent))
-            parent.protocol("WM_DELETE_WINDOW", lambda : self.edit_semester_save(item, itemID, col_index, parent))
+            self.double_click_entry.bind("<Return>", lambda event: self.edit_semester_save(
+                item, itemID, col_index, parent))
+            self.double_click_entry.bind("<FocusOut>", lambda event: self.edit_semester_save(
+                item, itemID, col_index, parent))
+            parent.protocol("WM_DELETE_WINDOW", lambda: self.edit_semester_save(
+                item, itemID, col_index, parent))
 
     def edit_semester_save(self, item, itemID, col_index, parent):
         '''save the edited semester
@@ -459,13 +471,13 @@ class TimeTrackerGUI:
 
     def validate_value_change(self, item, col_index, new_value):
         '''validate the value change
-        
+
         validates the new value and updates the semester
-        
+
         item: the item which was edited
         col_index: the index of the column which was edited
         new_value: the new value
-        
+
         returns True if the value is valid
         '''
         # deserialize the object
@@ -478,7 +490,8 @@ class TimeTrackerGUI:
             self.tracker.update_semester(sem, header, new_value)
             validFormat = True
         except ValueError as e:
-            messagebox.showerror("Error", f"Error while updating the value: {e}")
+            messagebox.showerror(
+                "Error", f"Error while updating the value: {e}")
         return validFormat
 
     def btn_start_stop_click(self):
@@ -488,8 +501,8 @@ class TimeTrackerGUI:
         '''
 
         started = self.tracker.toggle_tracking(self.semester_var.get(), self.module_var.get(),
-                self.category_var.get(), self.comment_var.get())
-        
+                                               self.category_var.get(), self.comment_var.get())
+
         # update button text and label visibility
         if started:
             self.start_stop_btn.config(text="Stop")
@@ -502,12 +515,14 @@ class TimeTrackerGUI:
 
     def btn_finish_click(self):
         ''' finishes the module'''
-        self.tracker.finish_module(self.semester_var.get(), self.module_var.get())
+        self.tracker.finish_module(
+            self.semester_var.get(), self.module_var.get())
 
     def update_tracking_label(self, elapsed):
         '''update the current duration label'''
         if elapsed:
-            self.current_duration_label.configure(text="Tracking for "+str(elapsed).split('.')[0])
+            self.current_duration_label.configure(
+                text="Tracking for "+str(elapsed).split('.')[0])
 
     def update_combo_semesters(self):
         '''updates the values of the semester combobox'''
@@ -529,7 +544,7 @@ class TimeTrackerGUI:
         mod_name = self.module_var.get()
         self.category_combobox['values'] = self.tracker.get_category_names(
             semName=sem_name, modName=mod_name)
-   
+
     def update_treeview(self):
         '''updates the treeview
 
@@ -543,7 +558,8 @@ class TimeTrackerGUI:
         modName = self.module_var.get()
         catName = self.category_var.get()
 
-        treeview_data = self.tracker.get_filtered_data_list(semName,modName,catName)
+        treeview_data = self.tracker.get_filtered_data_list(
+            semName, modName, catName)
 
         # clean all existing entries
         for item in self.tree.get_children():
@@ -553,8 +569,8 @@ class TimeTrackerGUI:
             semester = item['semester']
             module = item['module']
             entry = item['entry']
-            tags = (self.tracker.get_object_id(semester), 
-                    self.tracker.get_object_id(module), 
+            tags = (self.tracker.get_object_id(semester),
+                    self.tracker.get_object_id(module),
                     self.tracker.get_object_id(entry))
             start_time = entry.start_time.strftime(
                 "%Y-%m-%d %H:%M:%S")
@@ -579,16 +595,14 @@ class TimeTrackerGUI:
         entry = self.tracker.get_object_by_id(tags[2], mod)
 
         self.open_edit_entry_dialog(sem, mod, entry)
-        
 
     def open_edit_entry_dialog(self, sem, mod, entry):
         '''open a dialog to edit the entry
-        
+
         sem: the semester of the entry
         mod: the module of the entry
         entry: the entry to edit
         '''
-
         # new window
         edit_window = tk.Toplevel(self.root)
         edit_window.title("Edit entry")
@@ -624,7 +638,7 @@ class TimeTrackerGUI:
         self.module_start = DateTimeFrame(edit_window, label="Module start:")
         self.module_start.grid(row=3, columnspan=4, sticky='w')
         self.module_start.set_datetime(mod.start)
-        
+
         if mod.stop != None:
             self.module_end = DateTimeFrame(edit_window, label="Module end:")
             self.module_end.grid(row=4, columnspan=4, sticky='w')
@@ -633,35 +647,36 @@ class TimeTrackerGUI:
         ects_label = tk.Label(edit_window, text="ECTS:")
         ects_label.grid(row=5, column=0)
         self.module_ects = tk.StringVar()
-        ects_entry = tk.Entry(edit_window, textvariable = self.module_ects)
+        ects_entry = tk.Entry(edit_window, textvariable=self.module_ects)
         ects_entry.grid(row=5, column=1)
         self.module_ects.set(mod.ECTS)
 
         duration_label = tk.Label(edit_window, text="Duration:")
         duration_label.grid(row=6, column=0)
         self.module_duration = tk.StringVar()
-        duration_entry = tk.Entry(edit_window, textvariable = self.module_duration)
+        duration_entry = tk.Entry(
+            edit_window, textvariable=self.module_duration)
         duration_entry.grid(row=6, column=1)
         self.module_duration.set((mod.plannedEnd - mod.start).days // 7)
 
         add_btn = tk.Button(edit_window, text="Save as new entry",
-                            command=lambda: 
+                            command=lambda:
                             self.tracker.add_new_entry(
-                                self.sem_var.get(), self.mod_var.get(), 
-                                self.cat_var.get(), self.comment_var.get(), 
+                                self.sem_var.get(), self.mod_var.get(),
+                                self.cat_var.get(), self.comment_var.get(),
                                 self.start_time.get_datetime(), self.stop_time.get_datetime()))
         add_btn.grid(row=7, column=0, sticky='news')
         edit_btn = tk.Button(edit_window, text='Save entry',
-                             command=lambda s=sem, m=mod, e=entry: 
+                             command=lambda s=sem, m=mod, e=entry:
                              self.tracker.edit_entry(
-                                 s, m, e, self.sem_var.get(), 
-                                self.mod_var.get(), self.cat_var.get(), 
-                                self.comment_var.get(), self.start_time.get_datetime(), 
-                                self.stop_time.get_datetime(), self.module_start.get_datetime(), 
-                                self.module_end.get_datetime() if mod.stop != None else None, self.module_ects.get(), self.module_duration.get()))
+                                 s, m, e, self.sem_var.get(),
+                                 self.mod_var.get(), self.cat_var.get(),
+                                 self.comment_var.get(), self.start_time.get_datetime(),
+                                 self.stop_time.get_datetime(), self.module_start.get_datetime(),
+                                 self.module_end.get_datetime() if mod.stop != None else None, self.module_ects.get(), self.module_duration.get()))
         edit_btn.grid(row=7, column=1, sticky='news')
         remove_btn = tk.Button(edit_window, text='Delete entry',
-                               command=lambda s=sem, m=mod, e=entry: 
+                               command=lambda s=sem, m=mod, e=entry:
                                self.tracker.remove_entry(s, m, e))
         remove_btn.grid(row=7, column=2, sticky='news')
 
@@ -669,7 +684,8 @@ class TimeTrackerGUI:
         center_x, center_y = self.get_center_position(edit_window)
         edit_window.geometry(f"+{center_x}+{center_y}")
 
-        edit_window.after(800, lambda end=mod.stop:self.init_edit_entry_data(end))
+        edit_window.after(
+            800, lambda end=mod.stop: self.init_edit_entry_data(end))
 
     def init_edit_entry_data(self, end):
         self.start_time.initialize_date_entry()
@@ -678,7 +694,6 @@ class TimeTrackerGUI:
         if end != None:
             self.module_end.initialize_date_entry()
 
- # TODO: testing
     def generate_accordion(self, parent):
         '''generate an accordion
 
@@ -686,7 +701,7 @@ class TimeTrackerGUI:
 
         parent: the frame where the accordion is placed
         '''
-       
+
         # create a new accordion if none exists
         if self.accordion is None:
             self.accordion = Accordion(parent)
@@ -761,18 +776,17 @@ class TimeTrackerGUI:
         '''
         self.chart_scope = scope
         # prevent memory leak because matplotlib figure remains open
-        # TODO: write to Testprotocol
-        # TODO: Burndown check for instance of scope
-        if self.chart:  
+        if self.chart:
             self.chart.destroy()
-            
+
         # create data depending on the chart type
         try:
             self.chart = self.tracker.generate_chart(scope, self.active_chart)
         except ValueError:
-            messagebox.showerror("Error", "Chart could not be generated with the selected data!")
+            messagebox.showerror(
+                "Error", "Chart could not be generated with the selected data!")
             return
-        
+
         self.chart.plot(self.plot_frame)
 
     def get_center_position(self, window):
@@ -790,7 +804,7 @@ class TimeTrackerGUI:
         center_y = root_y + (root_height // 2) - (window_height // 2)
 
         return center_x, center_y
-    
+
     def save_data(self, filename=None):
         '''saves the data
 
@@ -816,7 +830,8 @@ class TimeTrackerGUI:
             self.tracker.import_from_json(filename)
             self.load_last_tracking()
         except FileNotFoundError as e:
-            messagebox.showinfo("Info", "No file found. Starting with new study")
+            messagebox.showinfo(
+                "Info", "No file found. Starting with new study")
             self.new_study(edit=False)
         except Exception as e:
             messagebox.showerror("Error", f"Error while loading data: {e}")

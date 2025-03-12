@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import Frame, ttk
+from tkinter import ttk
 from tkcalendar import DateEntry
 import datetime
+
 
 class DateTimeFrame(ttk.Frame):
     ''' a user control to combine selection of date and time
@@ -67,9 +68,9 @@ class DateTimeFrame(ttk.Frame):
 
         returns datetime
         '''
-        if(self.date_initialized == False):
+        if (self.date_initialized == False):
             return self.datetime
-        
+
         date = self.date.get_date()
         h = int(self.hour_entry.get()) if self.hour_entry.get() else 0
         m = int(self.minute_entry.get()) if self.minute_entry.get() else 0

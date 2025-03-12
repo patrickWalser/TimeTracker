@@ -9,7 +9,7 @@ if __name__ == "__main__":
     root = tk.Tk()
 
     # model
-    model = Study(180,30, datetime.datetime.now())
+    model = Study(180, 30, datetime.datetime.now())
 
     # controller
     controller = TimeTracker(model)

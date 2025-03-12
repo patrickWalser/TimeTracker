@@ -83,17 +83,21 @@ class UnitTestEntry(unittest.TestCase):
         sleep(5*timeout)
         self.assertEqual(first=duration, second=e.get_duration(),
                          msg="duration changed after stop()")
-                        
+
     def test_to_json(self):
         '''test the to_json method of Entry'''
         e = model.Entry("test_category", "test_comment")
         e.stop()
         json_data = e.to_json()
         self.assertEqual(e.id, json_data["id"], "ID does not match")
-        self.assertEqual(e.category, json_data["category"], "Category does not match")
-        self.assertEqual(e.comment, json_data["comment"], "Comment does not match")
-        self.assertEqual(e.start_time.isoformat(), json_data["start_time"], "Start time does not match")
-        self.assertEqual(e.stop_time.isoformat(), json_data["stop_time"], "Stop time does not match")
+        self.assertEqual(
+            e.category, json_data["category"], "Category does not match")
+        self.assertEqual(
+            e.comment, json_data["comment"], "Comment does not match")
+        self.assertEqual(e.start_time.isoformat(),
+                         json_data["start_time"], "Start time does not match")
+        self.assertEqual(e.stop_time.isoformat(),
+                         json_data["stop_time"], "Stop time does not match")
 
     def test_from_json(self):
         '''test the from_json method of Entry'''
@@ -102,10 +106,15 @@ class UnitTestEntry(unittest.TestCase):
         json_data = e.to_json()
         e_from_json = model.Entry.from_json(json_data)
         self.assertEqual(e.id, e_from_json.id, "ID does not match")
-        self.assertEqual(e.category, e_from_json.category, "Category does not match")
-        self.assertEqual(e.comment, e_from_json.comment, "Comment does not match")
-        self.assertEqual(e.start_time, e_from_json.start_time, "Start time does not match")
-        self.assertEqual(e.stop_time, e_from_json.stop_time, "Stop time does not match")
+        self.assertEqual(e.category, e_from_json.category,
+                         "Category does not match")
+        self.assertEqual(e.comment, e_from_json.comment,
+                         "Comment does not match")
+        self.assertEqual(e.start_time, e_from_json.start_time,
+                         "Start time does not match")
+        self.assertEqual(e.stop_time, e_from_json.stop_time,
+                         "Stop time does not match")
+
 
 class UnitTestModule(unittest.TestCase):
     def test_init(self):
@@ -283,9 +292,12 @@ class UnitTestModule(unittest.TestCase):
         self.assertEqual(mod.id, json_data["id"], "ID does not match")
         self.assertEqual(mod.name, json_data["name"], "Name does not match")
         self.assertEqual(mod.ECTS, json_data["ECTS"], "ECTS does not match")
-        self.assertEqual(mod.start.isoformat(), json_data["start"], "Start time does not match")
-        self.assertEqual(mod.plannedEnd.isoformat(), json_data["plannedEnd"], "Planned end does not match")
-        self.assertEqual(len(mod.entries), len(json_data["entries"]), "Entries length does not match")
+        self.assertEqual(mod.start.isoformat(),
+                         json_data["start"], "Start time does not match")
+        self.assertEqual(mod.plannedEnd.isoformat(),
+                         json_data["plannedEnd"], "Planned end does not match")
+        self.assertEqual(len(mod.entries), len(
+            json_data["entries"]), "Entries length does not match")
 
     def test_from_json(self):
         '''test the from_json method of Module'''
@@ -297,9 +309,12 @@ class UnitTestModule(unittest.TestCase):
         self.assertEqual(mod.id, mod_from_json.id, "ID does not match")
         self.assertEqual(mod.name, mod_from_json.name, "Name does not match")
         self.assertEqual(mod.ECTS, mod_from_json.ECTS, "ECTS does not match")
-        self.assertEqual(mod.start, mod_from_json.start, "Start time does not match")
-        self.assertEqual(mod.plannedEnd, mod_from_json.plannedEnd, "Planned end does not match")
-        self.assertEqual(len(mod.entries), len(mod_from_json.entries), "Entries length does not match")
+        self.assertEqual(mod.start, mod_from_json.start,
+                         "Start time does not match")
+        self.assertEqual(mod.plannedEnd, mod_from_json.plannedEnd,
+                         "Planned end does not match")
+        self.assertEqual(len(mod.entries), len(
+            mod_from_json.entries), "Entries length does not match")
 
 
 class UnitTestSemester(unittest.TestCase):
@@ -507,8 +522,10 @@ class UnitTestSemester(unittest.TestCase):
         self.assertEqual(sem.id, json_data["id"], "ID does not match")
         self.assertEqual(sem.name, json_data["name"], "Name does not match")
         self.assertEqual(sem.ECTS, json_data["ECTS"], "ECTS does not match")
-        self.assertEqual(sem.plannedEnd.isoformat() if sem.plannedEnd else None, json_data["plannedEnd"], "Planned end does not match")
-        self.assertEqual(len(sem.modules), len(json_data["modules"]), "Modules length does not match")
+        self.assertEqual(sem.plannedEnd.isoformat() if sem.plannedEnd else None,
+                         json_data["plannedEnd"], "Planned end does not match")
+        self.assertEqual(len(sem.modules), len(
+            json_data["modules"]), "Modules length does not match")
 
     def test_from_json(self):
         '''test the from_json method of Semester'''
@@ -519,8 +536,10 @@ class UnitTestSemester(unittest.TestCase):
         self.assertEqual(sem.id, sem_from_json.id, "ID does not match")
         self.assertEqual(sem.name, sem_from_json.name, "Name does not match")
         self.assertEqual(sem.ECTS, sem_from_json.ECTS, "ECTS does not match")
-        self.assertEqual(sem.plannedEnd, sem_from_json.plannedEnd, "Planned end does not match")
-        self.assertEqual(len(sem.modules), len(sem_from_json.modules), "Modules length does not match")
+        self.assertEqual(sem.plannedEnd, sem_from_json.plannedEnd,
+                         "Planned end does not match")
+        self.assertEqual(len(sem.modules), len(
+            sem_from_json.modules), "Modules length does not match")
 
 
 class UnitTestStudy(unittest.TestCase):
@@ -714,10 +733,10 @@ class UnitTestStudy(unittest.TestCase):
         sem_data = ["sem1", "sem11", "sem2"]
         for sem_name in sem_data:
             sem = model.Semester(name=sem_name)
-            m,_=sem.add_entry(moduleName="mod_"+sem_name, category="")
+            m, _ = sem.add_entry(moduleName="mod_"+sem_name, category="")
             study.add_semester(sem)
             ref_lst.append(m)
-            if("sem1" in sem_name):
+            if ("sem1" in sem_name):
                 ref_lst2.append(m)
 
         sem_lst = study.get_modules()
@@ -774,72 +793,93 @@ class UnitTestStudy(unittest.TestCase):
         sem_lst = study.get_categories(semName="sem1", modName="mod1")
         self.assertEqual(ref_lst, sem_lst, "study.get_modules did not return \
                          expected list")
-        
+
     def test_set_last_information(self):
         '''test if setting the last information works'''
         study = model.Study(180, 30, datetime.datetime.now())
-        
-        sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
+
+        sem, mod, entry = study.add_entry(
+            "semester", "module", "category", "comment")
         with self.assertRaises(TypeError):
-            study.set_last_information("a","b","c")
+            study.set_last_information("a", "b", "c")
         with self.assertRaises(TypeError):
-            study.set_last_information(mod,mod,entry)
+            study.set_last_information(mod, mod, entry)
         with self.assertRaises(TypeError):
-            study.set_last_information(sem,sem,entry)
+            study.set_last_information(sem, sem, entry)
         with self.assertRaises(TypeError):
-            study.set_last_information(sem,mod,mod)
+            study.set_last_information(sem, mod, mod)
 
         study.set_last_information(sem, mod, entry)
-        self.assertEqual(sem, study.last_semester, "last semester was not set correctly") 
-        self.assertEqual(mod, study.last_module, "last module was not set correctly")
-        self.assertEqual(entry, study.last_entry, "last entry was not set correctly")                
-    
+        self.assertEqual(sem, study.last_semester,
+                         "last semester was not set correctly")
+        self.assertEqual(mod, study.last_module,
+                         "last module was not set correctly")
+        self.assertEqual(entry, study.last_entry,
+                         "last entry was not set correctly")
+
     def test_get_last_information(self):
         '''test if reading the last information works'''
         study = model.Study(180, 30, datetime.datetime.now())
-        
-        sem,mod,entry = study.add_entry("semester", "module", "category", "comment")
-        s,m,e = study.get_last_information()
+
+        sem, mod, entry = study.add_entry(
+            "semester", "module", "category", "comment")
+        s, m, e = study.get_last_information()
 
         self.assertIsNone(s, "last semester was not set correctly")
         self.assertIsNone(m, "last module was not set correctly")
         self.assertIsNone(e, "last entry was not set correctly")
 
         study.set_last_information(sem, mod, entry)
-        s,m,e = study.get_last_information()
+        s, m, e = study.get_last_information()
 
-        self.assertEqual(sem, s, "last semester was not set correctly") 
+        self.assertEqual(sem, s, "last semester was not set correctly")
         self.assertEqual(mod, m, "last module was not set correctly")
-        self.assertEqual(entry, e, "last entry was not set correctly")  
+        self.assertEqual(entry, e, "last entry was not set correctly")
 
     def test_to_json(self):
         '''test the to_json method of Study'''
         study = model.Study(180, 30, datetime.datetime.now())
-        sem, mod, entry = study.add_entry("test_semester", "test_module", "test_category", "test_comment")
+        sem, mod, entry = study.add_entry(
+            "test_semester", "test_module", "test_category", "test_comment")
         study.set_last_information(sem, mod, entry)
         json_data = study.to_json()
         self.assertEqual(study.ECTS, json_data["ECTS"], "ECTS does not match")
-        self.assertEqual(study.hoursPerECTS, json_data["hoursPerECTS"], "Hours per ECTS does not match")
-        self.assertEqual(study.plannedEnd.isoformat(), json_data["plannedEnd"], "Planned end does not match")
-        self.assertEqual(len(study.semesters), len(json_data["semesters"]), "Semesters length does not match")
-        self.assertEqual(study.last_semester.to_json(), json_data["last_semester"], "Last semester does not match")
-        self.assertEqual(study.last_module.to_json(), json_data["last_module"], "Last module does not match")
-        self.assertEqual(study.last_entry.to_json(), json_data["last_entry"], "Last entry does not match")
+        self.assertEqual(
+            study.hoursPerECTS, json_data["hoursPerECTS"], "Hours per ECTS does not match")
+        self.assertEqual(study.plannedEnd.isoformat(),
+                         json_data["plannedEnd"], "Planned end does not match")
+        self.assertEqual(len(study.semesters), len(
+            json_data["semesters"]), "Semesters length does not match")
+        self.assertEqual(study.last_semester.to_json(
+        ), json_data["last_semester"], "Last semester does not match")
+        self.assertEqual(study.last_module.to_json(),
+                         json_data["last_module"], "Last module does not match")
+        self.assertEqual(study.last_entry.to_json(),
+                         json_data["last_entry"], "Last entry does not match")
 
     def test_from_json(self):
         '''test the from_json method of Study'''
         study = model.Study(180, 30, datetime.datetime.now())
-        sem, mod, entry = study.add_entry("test_semester", "test_module", "test_category", "test_comment")
+        sem, mod, entry = study.add_entry(
+            "test_semester", "test_module", "test_category", "test_comment")
         study.set_last_information(sem, mod, entry)
         json_data = study.to_json()
         study_from_json = model.Study.from_json(json_data)
-        self.assertEqual(study.ECTS, study_from_json.ECTS, "ECTS does not match")
-        self.assertEqual(study.hoursPerECTS, study_from_json.hoursPerECTS, "Hours per ECTS does not match")
-        self.assertEqual(study.plannedEnd, study_from_json.plannedEnd, "Planned end does not match")
-        self.assertEqual(len(study.semesters), len(study_from_json.semesters), "Semesters length does not match")
-        self.assertEqual(study.last_semester.id, study_from_json.last_semester.id, "Last semester does not match")
-        self.assertEqual(study.last_module.id, study_from_json.last_module.id, "Last module does not match")
-        self.assertEqual(study.last_entry.id, study_from_json.last_entry.id, "Last entry does not match")
+        self.assertEqual(study.ECTS, study_from_json.ECTS,
+                         "ECTS does not match")
+        self.assertEqual(
+            study.hoursPerECTS, study_from_json.hoursPerECTS, "Hours per ECTS does not match")
+        self.assertEqual(
+            study.plannedEnd, study_from_json.plannedEnd, "Planned end does not match")
+        self.assertEqual(len(study.semesters), len(
+            study_from_json.semesters), "Semesters length does not match")
+        self.assertEqual(study.last_semester.id,
+                         study_from_json.last_semester.id, "Last semester does not match")
+        self.assertEqual(
+            study.last_module.id, study_from_json.last_module.id, "Last module does not match")
+        self.assertEqual(
+            study.last_entry.id, study_from_json.last_entry.id, "Last entry does not match")
+
 
 if __name__ == '__main__':
     unittest.main()

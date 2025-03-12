@@ -7,6 +7,7 @@ from model import Study, Semester, Module, Entry
 from charts import ChartFactory, ChartType, Chart
 from settings import Settings
 
+
 class TimeTracker:
     '''Main of the TimeTracker
 
@@ -42,11 +43,12 @@ class TimeTracker:
         self.current_semester, self.current_module, self.current_entry = self._study.add_entry(
             semesterName=semesterName, moduleName=moduleName,
             category=category, comment=comment)
-        
+
         if self.current_module.ECTS == 0:
             self.current_module.ECTS = self.settings.get("module_ECTS")
         if self.current_module.plannedEnd == self.current_module.start:
-            self.current_module.set_plannedEnd(self.settings.get("module_duration"))
+            self.current_module.set_plannedEnd(
+                self.settings.get("module_duration"))
 
         self._start_timer()
 
@@ -57,7 +59,8 @@ class TimeTracker:
             raise RuntimeError("Currrently no tracking is active")
 
         self.current_entry.stop()
-        self._study.set_last_information(self.current_semester, self.current_module, self.current_entry)
+        self._study.set_last_information(
+            self.current_semester, self.current_module, self.current_entry)
         self.current_semester = None
         self.current_module = None
         self.current_entry = None
@@ -86,7 +89,7 @@ class TimeTracker:
         else:
             self.start_tracking(semester, module, category, comment)
             ret = True
-        
+
         if self.on_treeview_update:
             self.on_treeview_update()
 
@@ -105,16 +108,16 @@ class TimeTracker:
         comment = getattr(entry, 'comment', '')
 
         return semName, modName, category, comment
-    
+
     def _start_timer(self):
         """starts a timer for cyclic notification of observer"""
         def update():
             if self.current_entry and self.on_status_change:
                 elapsed = datetime.datetime.now() - self.current_entry.start_time
-                self.on_status_change(elapsed) # notfy the GUI
+                self.on_status_change(elapsed)  # notfy the GUI
             self._timer = threading.Timer(1.0, update)
             self._timer.start()
-        
+
         update()    # start first notification
 
     def _stop_timer(self):
@@ -144,9 +147,9 @@ class TimeTracker:
             return f"entry:{obj.id}"
         raise ValueError("Unsupported objext type for serialization")
 
-    def get_object_by_id(self, obj_id, parent = None):
+    def get_object_by_id(self, obj_id, parent=None):
         '''deserializes from an id to an object
-        
+
         uses the parent object if it is given to improve performance
 
         obj_id: the id of the object
@@ -154,7 +157,7 @@ class TimeTracker:
 
         returns: the object
         '''
-        obj_type, key = obj_id.split(":",1)
+        obj_type, key = obj_id.split(":", 1)
         if obj_type == "semester":
             for semester in self._study.semesters:
                 if semester.id == key:
@@ -164,7 +167,7 @@ class TimeTracker:
                 for module in parent.modules:
                     if module.id == key:
                         return module
-                    
+
             for semester in self._study.semesters:
                 for module in semester.modules:
                     if module.id == key:
@@ -174,7 +177,7 @@ class TimeTracker:
                 for entry in parent.entries:
                     if entry.id == key:
                         return entry
-                    
+
             for semester in self._study.semesters:
                 for module in semester.modules:
                     for entry in module.entries:
@@ -205,16 +208,17 @@ class TimeTracker:
 
                 for entry in module.entries:
                     if selected_category and not entry.category.startswith(selected_category):
-                        continue # skip if categories dont match
+                        continue  # skip if categories dont match
 
-                    filtered_data.append({"semester":semester, "module":module, "entry":entry})
+                    filtered_data.append(
+                        {"semester": semester, "module": module, "entry": entry})
 
         return filtered_data
-    
+
     def get_initial_entry(self):
         '''gets the information which should used at startup'''
         return self._study.get_last_information()
-    
+
     def get_semester(self, semName):
         '''get a semester by its name'''
         return self._study.get_semester(semName)
@@ -222,7 +226,7 @@ class TimeTracker:
     def get_semesters(self):
         '''get all semesters of the study'''
         return self._study.semesters
-    
+
     def get_semester_names(self):
         ''' get all semester names of the study'''
         return [s.name for s in self.get_semesters()]
@@ -230,7 +234,7 @@ class TimeTracker:
     def get_modules(self, semName):
         '''get all modules of a semester'''
         return self._study.get_modules(semName)
-    
+
     def get_module_names(self, semName):
         '''get all module names of a semester'''
         return [m.name for m in self.get_modules(semName)]
@@ -238,10 +242,10 @@ class TimeTracker:
     def get_category_names(self, semName, modName):
         '''get all category names of a module'''
         return self._study.get_categories(semName, modName)
-    
+
     def finish_module(self, semester_name, module_name):
         '''finishes a module
-        
+
         semester_name: name of the semester
         module_name: name of the module
         '''
@@ -253,7 +257,7 @@ class TimeTracker:
 
     def add_new_entry(self, semester_name, module_name, category, comment, start_time, stop_time):
         '''adds a new entry
-        
+
         semester_name: name of the semester
         module_name: name of the module
         category: the category
@@ -261,7 +265,8 @@ class TimeTracker:
         start_time: the start time of the entry
         stop_time: the stop time of the entry
         '''
-        sem, mod, entry = self._study.add_entry(semester_name, module_name, category, comment)
+        sem, mod, entry = self._study.add_entry(
+            semester_name, module_name, category, comment)
         entry.start_time = start_time
         entry.stop_time = stop_time
 
@@ -269,14 +274,14 @@ class TimeTracker:
             mod.ECTS = self.settings.get("module_ECTS")
         if mod.plannedEnd == mod.start:
             mod.set_plannedEnd(self.settings.get("module_duration"))
-        
+
         if self.on_treeview_update:
             self.on_treeview_update()
         return sem, mod, entry
 
     def remove_entry(self, semester, module, entry):
         '''removes an entry
-        
+
         removes also the semester or the module if they have no entries left
 
         semester: the semester of the entry
@@ -289,7 +294,7 @@ class TimeTracker:
 
     def edit_entry(self, semester, module, entry, edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time, edit_module_start, edit_module_stop, edit_module_ects, edit_module_duration):
         '''edits an entry
-        
+
         removes the old entry and adds a new one with the new information
 
         semester: the semester of the entry
@@ -303,17 +308,18 @@ class TimeTracker:
         edit_stop_time: the new stop time
         edit_module_stop: the new module stop time
         '''
-        s,m,e = self.add_new_entry(edit_semester_name, edit_module_name, edit_category, edit_comment, edit_start_time, edit_stop_time)
+        s, m, e = self.add_new_entry(edit_semester_name, edit_module_name,
+                                     edit_category, edit_comment, edit_start_time, edit_stop_time)
         m.start = edit_module_start
         m.ECTS = int(edit_module_ects)
         m.set_plannedEnd(int(edit_module_duration))
 
         if edit_module_stop is not None:
             m.stop = edit_module_stop
-        
+
         self.remove_entry(semester, module, entry)
 
-    def generate_chart(self, scope, chart_type=ChartType.PIE)-> Chart:
+    def generate_chart(self, scope, chart_type=ChartType.PIE) -> Chart:
         '''generates a chart
 
         scope: the data (study, Semester, Module) which will be printed
@@ -322,7 +328,7 @@ class TimeTracker:
         returns: the chart
         '''
 
-        if(isinstance(scope, Module) and chart_type == ChartType.BURNDOWN):
+        if (isinstance(scope, Module) and chart_type == ChartType.BURNDOWN):
             raise ValueError("Burndown chart is not supported for modules")
 
         # generate the titel
@@ -356,10 +362,10 @@ class TimeTracker:
             return self._get_pie_chart_data(scope)
         elif chart_tpe == ChartType.BURNDOWN:
             return self._get_burndown_chart_data(scope)
-    
+
     def _get_pie_chart_data(self, scope):
         '''gets the data for a pie chart
-        
+
         scope: the data (study, Semester, Module) which will be printed
 
         returns: the names and values for the chart
@@ -383,7 +389,8 @@ class TimeTracker:
             planned_end = scope.plannedEnd
             modules = [mod for sem in scope.semesters for mod in sem.modules]
         elif isinstance(scope, Semester):
-            total_work = scope.ECTS if scope.ECTS != 0 else sum(mod.ECTS for mod in scope.modules)
+            total_work = scope.ECTS if scope.ECTS != 0 else sum(
+                mod.ECTS for mod in scope.modules)
             planned_end = scope.plannedEnd if scope.plannedEnd else 0
             modules = scope.modules
         elif isinstance(scope, Module):
@@ -412,7 +419,7 @@ class TimeTracker:
         stop_times, values = zip(*stop_times_values)
 
         return list(stop_times), list(values), total_work, planned_end
-    
+
     def update_study(self, ECTS, hoursPerECTS, plannedEnd):
         '''updates the study
 
@@ -436,19 +443,19 @@ class TimeTracker:
         self._study = Study(ECTS, hoursPerECTS, plannedEnd)
         if self.on_treeview_update:
             self.on_treeview_update()
-        
+
         return self._study
-    
+
     def get_study_parameters(self):
         '''gets the study parameters
 
         returns: the ECTS, hours per ECTS and the planned end
         '''
         return self._study.ECTS, self._study.hoursPerECTS, self._study.plannedEnd
-    
+
     def update_semester(self, semester, field, new_value):
         '''updates a semester
-        
+
         semester: the semester to update
         field: the field to update
         new_value: the new value
@@ -458,21 +465,24 @@ class TimeTracker:
                 try:
                     semester.ECTS = int(new_value)
                 except ValueError:
-                    raise ValueError("Invalid ECTS value! Enter a positive integer.")
+                    raise ValueError(
+                        "Invalid ECTS value! Enter a positive integer.")
             elif field == "plannedEnd":
                 formats = ["%Y-%m-%d", "%d.%m.%Y", "%Y/%m/%d", "%m/%d/%Y"]
                 for fmt in formats:
                     try:
-                        semester.plannedEnd = datetime.datetime.strptime(new_value, fmt)
+                        semester.plannedEnd = datetime.datetime.strptime(
+                            new_value, fmt)
                         break
                     except ValueError:
                         continue
                 else:
-                    raise ValueError("Invalid date format! Enter the plannedEnd in one of the following formats: " + '; '.join(formats).replace('%',''))
+                    raise ValueError(
+                        "Invalid date format! Enter the plannedEnd in one of the following formats: " + '; '.join(formats).replace('%', ''))
             return semester
         else:
             raise ValueError("Semester not found")
-    
+
     def export_to_json(self, filename):
         '''exports the study to a json file
 
