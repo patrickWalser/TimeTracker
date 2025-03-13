@@ -58,7 +58,7 @@ class TimeTrackerGUI:
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(
-            label="About", command=lambda: messagebox.showinfo("About", "TimeTracker v0.1"))
+            label="About", command=lambda: messagebox.showinfo("About", "TimeTracker v1.0"))
 
     def setup_views(self):
         '''setup the views
@@ -842,4 +842,8 @@ class TimeTrackerGUI:
         saves the data to the last used filename
         '''
         self.save_data()
+
+        if self.chart:
+            self.chart.destroy()
+            
         self.root.destroy()
